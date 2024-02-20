@@ -317,6 +317,8 @@ include ":kotlin-atomicfu-compiler-plugin",
         ":kotlinx-atomicfu-runtime",
         ":atomicfu"
 
+include ":litmuskt"
+
 include ":plugins:js-plain-objects:compiler-plugin",
         ":plugins:js-plain-objects:compiler-plugin-embeddable",
         ":plugins:js-plain-objects:compiler-plugin:js-plain-objects.common",
@@ -904,6 +906,8 @@ project(':kotlin-atomicfu-compiler-plugin').projectDir = file("$rootDir/plugins/
 project(':kotlin-atomicfu-compiler-plugin-embeddable').projectDir = file("$rootDir/plugins/atomicfu/atomicfu-compiler-embeddable")
 project(':kotlinx-atomicfu-runtime').projectDir = file("$rootDir/plugins/atomicfu/atomicfu-runtime")
 project(':atomicfu').projectDir = file("$rootDir/libraries/tools/atomicfu")
+
+project(':litmuskt').projectDir = file("$rootDir/native/litmuskt")
 
 if (!buildProperties.inJpsBuildIdeaSync) {
     project(':plugins:compose-compiler-plugin').projectDir = file("$rootDir/plugins/compose")
