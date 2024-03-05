@@ -1,3 +1,8 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.konan.target.HostManager
+
 plugins {
     kotlin("jvm")
     id("jps-compatible")
@@ -6,7 +11,7 @@ plugins {
 // WARNING: Native target is host-dependent. Re-running the same build on another host OS may bring to a different result.
 val nativeTargetName = HostManager.host.name
 
-val litmusktNativeKlib by configurations.creating {
+val litmusktCoreNativeKlib by configurations.creating {
     attributes {
         attribute(KotlinPlatformType.attribute, KotlinPlatformType.native)
         // WARNING: Native target is host-dependent. Re-running the same build on another host OS may bring to a different result.
@@ -16,7 +21,19 @@ val litmusktNativeKlib by configurations.creating {
     }
 }
 
-val litmusktCompilerPluginForTests by configurations.creating
+val litmusktTestsuiteNativeKlib by configurations.creating {
+    attributes {
+        attribute(KotlinPlatformType.attribute, KotlinPlatformType.native)
+        // WARNING: Native target is host-dependent. Re-running the same build on another host OS may bring to a different result.
+        attribute(KotlinNativeTarget.konanTargetAttribute, nativeTargetName)
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(KotlinUsages.KOTLIN_API))
+        attribute(KotlinPlatformType.attribute, KotlinPlatformType.native)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
 
 dependencies {
     compileOnly(intellijCore())
@@ -27,7 +44,6 @@ dependencies {
     compileOnly(project(":compiler:frontend"))
     compileOnly(project(":compiler:backend"))
     compileOnly(project(":compiler:ir.backend.common"))
-
     compileOnly(project(":compiler:backend.jvm"))
     compileOnly(project(":compiler:ir.tree"))
 
@@ -39,7 +55,6 @@ dependencies {
     testApi(projectTests(":compiler:tests-compiler-utils"))
     testApi(projectTests(":compiler:tests-common-new"))
     testImplementation(projectTests(":generators:test-generator"))
-
     testImplementation(libs.junit4)
     testApi(kotlinTest())
 
@@ -65,7 +80,11 @@ dependencies {
     testRuntimeOnly(kotlinStdlib())
     testRuntimeOnly(project(":compiler:backend-common"))
 
-// TODO: should be useful
+    // use local subprojects as dependencies 
+    litmusktCoreNativeKlib(project(":litmuskt:core")) { isTransitive = false }
+    litmusktTestsuiteNativeKlib(project(":litmuskt:testsuite")) { isTransitive = false }
+
+// TODO: should be useful in the future
 // Implicit dependencies on native artifacts to run native tests on CI
 //    implicitDependencies("org.jetbrains.kotlinx:atomicfu-linuxx64:0.21.0") {
 //        attributes {
@@ -102,27 +121,27 @@ useD8Plugin()
 
 projectTest(jUnitMode = JUnitMode.JUnit5) {
     useJUnitPlatform {
-        // Exclude all tests with the "atomicfu-native" tag. They should be launched by another test task.
-        excludeTags("atomicfu-native")
+        // Exclude all tests with the "litmuskt-native" tag. They should be launched by another test task.
+        excludeTags("litmuskt-native")
     }
     workingDir = rootDir
     dependsOn(":dist")
 }
 
-//publish()
-//standardPublicJars()
+publish()
+standardPublicJars()
 
-//val nativeTest = nativeTest(
-//    taskName = "nativeTest",
-//    tag = "atomicfu-native", // Include all tests with the "atomicfu-native" tag.
-//    requirePlatformLibs = true,
-//    customTestDependencies = listOf(atomicfuNativeKlib),
-//    )
-//
-//tasks.named("check") {
-//    // Depend on the test task that launches Native tests so that it will also run together with tests
-//    // for all other targets if K/N is enabled
-//    if (kotlinBuildProperties.isKotlinNativeEnabled) {
-//        dependsOn(nativeTest)
-//    }
-//}
+val nativeTest = nativeTest(
+    taskName = "nativeTest",
+    tag = "litmuskt-native", // Include all tests with the "litmuskt-native" tag.
+    requirePlatformLibs = true,
+    customTestDependencies = listOf(litmusktCoreNativeKlib, litmusktTestsuiteNativeKlib)
+)
+
+tasks.named("check") {
+    // Depend on the test task that launches Native tests so that it will also run together with tests
+    // for all other targets if K/N is enabled
+    if (kotlinBuildProperties.isKotlinNativeEnabled) {
+        dependsOn(nativeTest)
+    }
+}
