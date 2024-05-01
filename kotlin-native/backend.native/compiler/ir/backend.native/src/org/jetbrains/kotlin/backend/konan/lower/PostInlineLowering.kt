@@ -82,7 +82,7 @@ internal class PostInlineLowering(val context: Context) : BodyLoweringPass {
                             ?: error("varargs shall not be lowered yet")
                     val builder = StringBuilder()
                     args.elements.forEach {
-                        require(it is IrConst<*>) { renderCompilerError(irFile, it, "expected const") }
+                        require(it is IrConst) { renderCompilerError(irFile, it, "expected const") }
                         val value = it.value
                         require(value is Short && value >= 0 && value <= 0xff) {
                             renderCompilerError(irFile, it, "incorrect value for binary data: $value")
