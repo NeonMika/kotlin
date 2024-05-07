@@ -20,6 +20,16 @@ internal fun throwAsJsException(t: Throwable): Nothing {
     throwJsError(t.message, getSimpleName(t.typeInfo), t.jsStack)
 }
 
-internal fun throwJsException(): Nothing {
-    throw JsException()
+@JsName("Error")
+private external class JsError : JsAny {
+    val message: String
+    val stack: ExternalInterfaceType
+}
+
+internal fun throwJsException(jsError: JsAny): Nothing {
+    if (jsError is JsError) {
+        throw JsException(jsError, jsError.message, jsError.stack)
+    } else {
+        throw JsException(jsError)
+    }
 }

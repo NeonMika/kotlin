@@ -22,7 +22,7 @@ public open class Throwable(public open val message: String?, public open val ca
 
     public constructor() : this(null, null)
 
-    internal val jsStack: ExternalInterfaceType = captureStackTrace()
+    open internal val jsStack: ExternalInterfaceType = captureStackTrace()
 
     private var _stack: String? = null
     internal val stack: String
@@ -54,5 +54,5 @@ internal actual var Throwable.suppressedExceptionsList: MutableList<Throwable>?
 
 internal actual val Throwable.stack: String get() = this.stack
 
-private fun captureStackTrace(): ExternalInterfaceType =
+internal fun captureStackTrace(): ExternalInterfaceType =
     js("new Error().stack")

@@ -813,9 +813,9 @@ class BodyGenerator(
      *
      * ```wat
      * block $catch_block (TRANSLATED_CONTAINER_EXPRESSION_TYPE)
-     *     block $catch_all_block (THROWABLE_TYPE)
-     *         block $try_block
-     *             try_table (THROWABLE_TYPE) catch $catch_all_block catch_all $try_block
+     *     block $catch_js_error_block (THROWABLE_TYPE)
+     *         block $try_block (externref)
+     *             try_table (externref) catch IDX $catch_js_error_block catch JSTag $try_block
      *                 TRANSLATED_CONTAINER_EXPRESSION
      *                 br $catch_block
      *             end
@@ -833,14 +833,15 @@ class BodyGenerator(
         val revealLocation = SourceLocation.NoLocation("JS exception reveal")
 
         body.buildBlock("CATCH_BLOCK", resultType) { catchBlockLabel ->
-            body.buildBlock("CATCH_ALL_BLOCK", throwableType) { catchAllBlockLabel ->
-                body.buildBlock("TRY_BLOCK") { tryBlockLabel ->
+            body.buildBlock("CATCH_JS_ERROR_BLOCK", throwableType) { catchAllBlockLabel ->
+                body.buildBlock("TRY_BLOCK", WasmExternRef) { tryBlockLabel ->
                     body.buildTryTable(
                         null,
                         listOf(
                             body.createNewCatch(functionContext.tagIdx, catchAllBlockLabel),
-                            body.createNewCatchAll(tryBlockLabel)
-                        )
+                            body.createNewCatch(functionContext.jsExceptionTagIdx, tryBlockLabel)
+                        ),
+                        WasmExternRef
                     )
                     processContainerExpression(expression)
                     body.buildBr(catchBlockLabel, SourceLocation.NoLocation(""))
@@ -864,7 +865,7 @@ class BodyGenerator(
      *     TRANSLATED_CONTAINER_EXPRESSION
      * catch IDX
      *     rethrow
-     * catch_all
+     * catch JSTag
      *     call $throwJsException
      *     unreachable
      * end
@@ -876,7 +877,7 @@ class BodyGenerator(
         val revealLocation = SourceLocation.NoLocation("JS exception reveal")
         body.buildCatch(functionContext.tagIdx)
         body.buildInstr(WasmOp.RETHROW, revealLocation, WasmImmediate.LabelIdx(0))
-        body.buildCatchAll()
+        body.buildCatch(functionContext.jsExceptionTagIdx)
         body.buildCall(
             symbol = context.referenceFunction(context.backendContext.wasmSymbols.jsRelatedSymbols.throwJsException),
             location = revealLocation

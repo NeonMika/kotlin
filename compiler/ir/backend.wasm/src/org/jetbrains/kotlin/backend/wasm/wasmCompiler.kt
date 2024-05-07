@@ -290,6 +290,9 @@ $jsCodeBodyIndented
     const wasmFilePath = ${wasmFilePath.toJsStringLiteral()};
     const importObject = {
         js_code,
+        intrinsics: {
+            js_error_tag: WebAssembly.JSTag  
+        },
 $imports
     };
     

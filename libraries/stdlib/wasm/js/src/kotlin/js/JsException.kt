@@ -5,9 +5,15 @@
 
 package kotlin.js
 
+import kotlin.wasm.internal.ExternalInterfaceType
+
 /**
  * Exception thrown by the JavaScript code.
  * All exceptions thrown by JS code are signalled to Wasm code as `JsException`.
  * One can catch such exception in Wasm, but no details of the original exception can be retrieved from it.
  * */
-public class JsException : Throwable(message = "Exception was thrown while running JavaScript code")
+public class JsException(
+    public val value: JsAny,
+    message: String = "Some non-error like JavaScript value was thrown from JavaScript side.",
+    override val jsStack: ExternalInterfaceType = captureStackTrace()
+) : Throwable(message = message)

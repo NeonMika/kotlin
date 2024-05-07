@@ -27,8 +27,11 @@ class WasmFunctionCodegenContext(
     val bodyGen: WasmExpressionBuilder =
         WasmIrExpressionBuilder(wasmFunction.instructions)
 
-    val tagIdx: Int
+    val jsExceptionTagIdx: Int
         get() = 0
+
+    val tagIdx: Int
+        get() = 1
 
     private val wasmLocals = LinkedHashMap<IrValueSymbol, WasmLocal>()
     private val wasmSyntheticLocals = LinkedHashMap<SyntheticLocalType, WasmLocal>()
