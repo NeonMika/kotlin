@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isInterface
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.wasm.ir.*
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 class WasmCompiledModuleFragment(
     val irBuiltIns: IrBuiltIns,
     generateTrapsInsteadOfExceptions: Boolean,
+    itsPossibleToCatchJsError: Boolean
 ) {
     val functions =
         ReferencableAndDefinable<IrFunctionSymbol, WasmFunction>()
@@ -46,23 +48,23 @@ class WasmCompiledModuleFragment(
     val constantArrayDataSegmentId =
         ReferencableElements<Pair<List<Long>, WasmType>, Int>()
 
-    private val throwableTagFuncType = WasmFunctionType(
+    internal val throwableTagFuncType = WasmFunctionType(
         listOf(
             WasmRefNullType(WasmHeapType.Type(gcTypes.reference(irBuiltIns.throwableClass)))
         ),
         emptyList()
     )
 
-    private val jsExceptionTagFuncType = WasmFunctionType(
+    internal val jsExceptionTagFuncType = WasmFunctionType(
         listOf(WasmExternRef),
         emptyList()
     )
 
-    val tags = if (generateTrapsInsteadOfExceptions)
-        emptyList()
-    else listOf(
-        WasmTag(throwableTagFuncType),
-        WasmTag(jsExceptionTagFuncType, WasmImportDescriptor("intrinsics", "js_error_tag")),
+    val tags = listOfNotNull(
+        runIf(!generateTrapsInsteadOfExceptions && itsPossibleToCatchJsError) {
+            WasmTag(jsExceptionTagFuncType, WasmImportDescriptor("intrinsics", "js_error_tag"))
+        },
+        runIf(!generateTrapsInsteadOfExceptions) { WasmTag(throwableTagFuncType) }
     )
 
     val typeInfo = ReferencableAndDefinable<IrClassSymbol, ConstantDataElement>()

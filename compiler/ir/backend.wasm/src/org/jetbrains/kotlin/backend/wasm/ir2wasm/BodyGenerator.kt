@@ -142,7 +142,7 @@ class BodyGenerator(
             return
         }
 
-        body.buildThrow(functionContext.tagIdx, expression.getSourceLocation())
+        body.buildThrow(functionContext.context.throwableTagIndex, expression.getSourceLocation())
     }
 
     override fun visitTry(aTry: IrTry) {
@@ -196,7 +196,7 @@ class BodyGenerator(
             body.buildBlock("TRY_BLOCK", exceptionType) { tryBlockLabel ->
                 body.buildTryTable(
                     null,
-                    listOf(body.createNewCatch(functionContext.tagIdx, tryBlockLabel)),
+                    listOf(body.createNewCatch(functionContext.context.throwableTagIndex, tryBlockLabel)),
                     exceptionType
                 )
                 generateExpression(aTry.tryResult)
@@ -241,7 +241,7 @@ class BodyGenerator(
         body.buildTry(null, resultType)
         generateExpression(aTry.tryResult)
 
-        body.buildCatch(functionContext.tagIdx)
+        body.buildCatch(functionContext.context.throwableTagIndex)
 
         // Exception object is on top of the stack, store it into the local
         aTry.catches.single().catchParameter.symbol.let {
@@ -838,8 +838,8 @@ class BodyGenerator(
                     body.buildTryTable(
                         null,
                         listOf(
-                            body.createNewCatch(functionContext.tagIdx, catchAllBlockLabel),
-                            body.createNewCatch(functionContext.jsExceptionTagIdx, tryBlockLabel)
+                            body.createNewCatch(functionContext.context.throwableTagIndex, catchAllBlockLabel),
+                            body.createNewCatch(functionContext.context.jsExceptionTagIndex, tryBlockLabel)
                         ),
                         WasmExternRef
                     )
@@ -854,7 +854,7 @@ class BodyGenerator(
                 )
                 body.buildUnreachable(revealLocation)
             }
-            body.buildThrow(functionContext.tagIdx, revealLocation)
+            body.buildThrow(functionContext.context.throwableTagIndex, revealLocation)
         }
     }
 
@@ -875,9 +875,9 @@ class BodyGenerator(
         body.buildTry(null, context.transformBlockResultType(expression.type))
         processContainerExpression(expression)
         val revealLocation = SourceLocation.NoLocation("JS exception reveal")
-        body.buildCatch(functionContext.tagIdx)
+        body.buildCatch(functionContext.context.throwableTagIndex)
         body.buildInstr(WasmOp.RETHROW, revealLocation, WasmImmediate.LabelIdx(0))
-        body.buildCatch(functionContext.jsExceptionTagIdx)
+        body.buildCatch(functionContext.context.jsExceptionTagIndex)
         body.buildCall(
             symbol = context.referenceFunction(context.backendContext.wasmSymbols.jsRelatedSymbols.throwJsException),
             location = revealLocation

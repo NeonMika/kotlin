@@ -10,10 +10,15 @@ import kotlin.wasm.internal.ExternalInterfaceType
 /**
  * Exception thrown by the JavaScript code.
  * All exceptions thrown by JS code are signalled to Wasm code as `JsException`.
- * One can catch such exception in Wasm, but no details of the original exception can be retrieved from it.
+ *
+ * [thrownValue] is a value thrown by JavaScript; commonly it's an instance of an `Error` subclass, but it could be also any value
+ * [externalStackTrace] is a stacktrace received from the [thrownValue] if it's an instance of an `Error` subclass
  * */
 public class JsException(
-    public val value: JsAny,
+    public val thrownValue: JsAny,
     message: String = "Some non-error like JavaScript value was thrown from JavaScript side.",
-    override val jsStack: ExternalInterfaceType = captureStackTrace()
-) : Throwable(message = message)
+    private val externalStackTrace: ExternalInterfaceType? = null
+) : Throwable(message = message) {
+    override internal val jsStack: ExternalInterfaceType
+        get() = externalStackTrace ?: super.jsStack
+}
