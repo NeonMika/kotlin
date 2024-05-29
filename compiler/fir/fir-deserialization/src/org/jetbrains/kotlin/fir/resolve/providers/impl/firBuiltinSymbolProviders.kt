@@ -266,6 +266,7 @@ fun getTopLevelClassifierNamesInPackage(
     return builtInsPackageFragments[packageFqName]?.classDataFinder?.allClassIds?.mapTo(mutableSetOf()) { it.shortClassName }.orEmpty()
 }
 
+// TODO: paths
 /**
  * This provider allows to get symbols for so-called built-in classes.
  *
