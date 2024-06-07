@@ -356,7 +356,6 @@ class BodyGenerator(
             if (!areTwoCatchWithTheSameBody) {
                 firstCatchBlock.initializeCatchParameter()
                 generateExpression(firstCatchBlock.result)
-            } else {
             }
         }
 
