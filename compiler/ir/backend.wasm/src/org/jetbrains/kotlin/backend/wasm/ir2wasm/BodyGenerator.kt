@@ -222,7 +222,8 @@ class BodyGenerator(
         val firstCatchBlock = aTry.catches.first()
         val resultType = context.transformBlockResultType(aTry.type)
         val needCatchAllOnly = lastCatchBlock.origin === SYNTHETIC_CATCH_FOR_FINALLY_EXPRESSION
-        val areTwoCatchWithTheSameBody = firstCatchBlock.origin === SYNTHETIC_JS_EXCEPTION_HANDLER_TO_SUPPORT_CATCH_THROWABLE
+        val areTwoCatchWithTheSameBody =
+            context.backendContext.isWasmJsTarget && firstCatchBlock.origin === SYNTHETIC_JS_EXCEPTION_HANDLER_TO_SUPPORT_CATCH_THROWABLE
 
         val topLevelCatchLabel = body.buildBlock(resultType)
         val nestedCatchLabel = runIf(lastCatchBlock !== firstCatchBlock) {
@@ -231,7 +232,7 @@ class BodyGenerator(
 
         val tryBlockType = when {
             needCatchAllOnly -> WasmExnRefType
-            !context.backendContext.isWasmJsTarget && firstCatchBlock.catchParameter.type == wasmSymbols.jsRelatedSymbols.jsException.defaultType -> WasmExternRef
+            context.backendContext.isWasmJsTarget && firstCatchBlock.catchParameter.type == wasmSymbols.jsRelatedSymbols.jsException.defaultType -> WasmExternRef
             else -> context.transformBlockResultType(irBuiltIns.throwableType)
         }
 
