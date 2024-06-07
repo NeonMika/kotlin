@@ -147,6 +147,11 @@ class BodyGenerator(
 
         val sourceLocation = expression.getSourceLocation()
 
+        if (!context.backendContext.isWasmJsTarget) {
+            body.buildThrow(functionContext.context.throwableTagIndex, sourceLocation)
+            return
+        }
+
         when (expression.type) {
             wasmSymbols.jsRelatedSymbols.jsException.defaultType -> {
                 generateInstanceFieldAccess(wasmSymbols.jsRelatedSymbols.jsExceptionThrownValue, expression.value.getSourceLocation())
@@ -226,7 +231,7 @@ class BodyGenerator(
 
         val tryBlockType = when {
             needCatchAllOnly -> WasmExnRefType
-            firstCatchBlock.catchParameter.type == wasmSymbols.jsRelatedSymbols.jsException.defaultType -> WasmExternRef
+            !context.backendContext.isWasmJsTarget && firstCatchBlock.catchParameter.type == wasmSymbols.jsRelatedSymbols.jsException.defaultType -> WasmExternRef
             else -> context.transformBlockResultType(irBuiltIns.throwableType)
         }
 
@@ -324,8 +329,10 @@ class BodyGenerator(
         val firstCatchBlock = aTry.catches.first()
         val resultType = context.transformBlockResultType(aTry.type)
         var topLevelBlockLabel: Int? = null
-        val areTwoCatchWithTheSameBody = lastCatchBlock.origin === SYNTHETIC_CATCH_FOR_FINALLY_EXPRESSION ||
-                firstCatchBlock.origin === SYNTHETIC_JS_EXCEPTION_HANDLER_TO_SUPPORT_CATCH_THROWABLE
+        val areTwoCatchWithTheSameBody = context.backendContext.isWasmJsTarget && (
+                lastCatchBlock.origin === SYNTHETIC_CATCH_FOR_FINALLY_EXPRESSION ||
+                        firstCatchBlock.origin === SYNTHETIC_JS_EXCEPTION_HANDLER_TO_SUPPORT_CATCH_THROWABLE
+                )
 
         if (areTwoCatchWithTheSameBody) {
             topLevelBlockLabel = body.buildBlock(resultType)

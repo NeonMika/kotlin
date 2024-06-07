@@ -13,7 +13,7 @@ import kotlin.wasm.internal.ExternalInterfaceType
  *
  * [thrownValue] is a value thrown by JavaScript; commonly it's an instance of an `Error` subclass, but it could be also any value
  * */
-public class JsException(public val thrownValue: JsAny) : Throwable() {
+public class JsException internal constructor(public val thrownValue: JsAny) : Throwable() {
     override var message: String? = "Some non-error like JavaScript value was thrown from JavaScript side."
         private set
 

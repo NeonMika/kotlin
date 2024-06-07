@@ -71,7 +71,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 internal class TryCatchCanonicalization(private val ctx: WasmBackendContext) : FileLoweringPass {
     override fun lower(irFile: IrFile) {
-        irFile.transformChildrenVoid(JsExceptionHandlerForThrowableOnly(ctx))
+        if (ctx.isWasmJsTarget) {
+            irFile.transformChildrenVoid(JsExceptionHandlerForThrowableOnly(ctx))
+        }
+
         irFile.transformChildrenVoid(CatchMerger(ctx))
 
         irFile.transformChildrenVoid(FinallyBlocksLowering(ctx, ctx.irBuiltIns.throwableType))
