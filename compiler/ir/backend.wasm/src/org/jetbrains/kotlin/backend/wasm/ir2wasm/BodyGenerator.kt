@@ -337,7 +337,6 @@ class BodyGenerator(
 
         if (areTwoCatchWithTheSameBody) {
             topLevelBlockLabel = body.buildBlock(resultType)
-            functionContext.defineLocal(lastCatchBlock.catchParameter.symbol)
         }
 
         val tryResultType = when {
@@ -379,10 +378,7 @@ class BodyGenerator(
         body.buildEnd() // try
 
         if (areTwoCatchWithTheSameBody) {
-            body.buildSetLocal(
-                functionContext.referenceLocal(lastCatchBlock.catchParameter.symbol),
-                SourceLocation.NoLocation
-            )
+            lastCatchBlock.initializeCatchParameter()
             generateExpression(lastCatchBlock.result)
             body.buildEnd() // topLevelBlockLabel
         }
