@@ -21,3 +21,6 @@ internal fun throwAsJsException(t: Throwable): Nothing {
 }
 
 internal fun createJsException(jsError: JsAny) = JsException(jsError)
+
+// TODO: remove after the next bootstrapping
+internal fun throwJsException(): Nothing = TODO("Should be never called")
