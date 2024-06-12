@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOriginImpl
 import org.jetbrains.kotlin.ir.expressions.IrTry
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.visitors.*
 import org.jetbrains.kotlin.name.Name
@@ -129,6 +130,13 @@ internal class JsExceptionHandlerForThrowableOnly(private val ctx: WasmBackendCo
 }
 
 internal class CatchMerger(private val ctx: WasmBackendContext) : IrElementTransformerVoidWithContext() {
+    private val allowedCatchParameterTypes = buildSet {
+        add(ctx.irBuiltIns.throwableType)
+        if (ctx.isWasmJsTarget) {
+            add(ctx.wasmSymbols.jsRelatedSymbols.jsException.defaultType)
+        }
+    }
+
     override fun visitTry(aTry: IrTry): IrExpression {
         // First, handle all nested constructs
         aTry.transformChildrenVoid(this)
@@ -137,9 +145,7 @@ internal class CatchMerger(private val ctx: WasmBackendContext) : IrElementTrans
         val activeCatches = if (throwableHandlerIndex == -1) aTry.catches else aTry.catches.subList(0, throwableHandlerIndex + 1)
 
         // Nothing to do
-        if (activeCatches.isEmpty() ||
-            activeCatches.all { it.catchParameter.type == ctx.irBuiltIns.throwableType || it.catchParameter.type == ctx.wasmSymbols.jsRelatedSymbols.jsException.defaultType }
-        )
+        if (activeCatches.isEmpty() || activeCatches.all { it.catchParameter.type in allowedCatchParameterTypes })
             return super.visitTry(aTry)
 
         ctx.createIrBuilder(currentScope!!.scope.scopeOwnerSymbol).run {
@@ -152,8 +158,11 @@ internal class CatchMerger(private val ctx: WasmBackendContext) : IrElementTrans
                 ctx.irBuiltIns.throwableType
             )
 
-            val jsExceptionCatchIndex =
-                activeCatches.indexOfFirst { it.catchParameter.type == ctx.wasmSymbols.jsRelatedSymbols.jsException.defaultType }
+            val jsExceptionCatchIndex = runIf(ctx.isWasmJsTarget) {
+                activeCatches.indexOfFirst {
+                    it.catchParameter.type == ctx.wasmSymbols.jsRelatedSymbols.jsException.defaultType
+                }
+            } ?: -1
 
             val newCatchBody = irBlock(aTry) {
                 +irWhen(
