@@ -1,5 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.jetbrains.kotlin.build.androidsdkprovisioner.AndroidSdkProvisionerExtension
 import org.jetbrains.kotlin.build.androidsdkprovisioner.ProvisioningType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -214,6 +213,70 @@ tasks {
 
     withType<ShadowJar>().configureEach {
         relocate("com.github.gundy", "$kotlinEmbeddableRootPackage.com.github.gundy")
+//        val notRelocatedKotlinPackages = listOf(
+//            "org.jetbrains.kotlin.config.KotlinCompilerVersion", // used a lot in buildscripts
+//            "org.jetbrains.kotlin.cli.**", // keep CLI classes for the IDEA < 2023.2 import
+//            "org.jetbrains.kotlin.gradle.**", // part of the plugin
+//            "org.jetbrains.kotlin.project.model.**", // part of the plugin
+//            "org.jetbrains.kotlin.statistics.**", // part of the plugin
+//            "org.jetbrains.kotlin.tooling.**", // part of the plugin
+//            "org.jetbrains.kotlin.buildtools.api.**", // standalone published artifact, don't relocate usages
+//            "org.jetbrains.kotlin.commonizer.**", // standalone published artifact, don't relocate usages
+//            "org.jetbrains.kotlin.compilerRunner.**", // standalone published artifact, don't relocate usages
+//            "org.jetbrains.kotlin.daemon.**", // standalone published artifact, don't relocate usages
+//            "org.jetbrains.kotlin.konan.**", // standalone published artifact, exposed as API dependency of KGP-API
+//            "org.jetbrains.kotlin.util.UtilKt", // class from kotlin-util-io which is a transitive API dependency of KGP-API, don't relocate usages
+//            "org.jetbrains.kotlin.config.Services**", // required to initialize `CompilerEnvironment`
+//            "org.jetbrains.kotlin.util.capitalizeDecapitalize.CapitalizeDecapitalizeKt", // used in standalone published artifacts that the plugin depends on
+//            "org.jetbrains.kotlin.incremental.**", // Required to communicate with the daemon
+//        )
+//        relocate(SimpleRelocator("org.jetbrains.kotlin.", "org.jetbrains.kotlin.gradle.internal.", emptyList(), notRelocatedKotlinPackages))
+        val baseSourcePackage = "org.jetbrains.kotlin"
+        val baseTargetPackage = "org.jetbrains.kotlin.gradle.internal"
+        val packages: Map<String, List<String>> = mapOf(
+            "analyzer" to emptyList(),
+            "build" to listOf(
+                "org.jetbrains.kotlin.build.report.**",
+            ),
+            "builtins" to emptyList(),
+            "config" to listOf(
+                "org.jetbrains.kotlin.config.JvmTarget**", // used a lot in buildscripts
+                "org.jetbrains.kotlin.config.KotlinCompilerVersion", // used a lot in buildscripts
+                "org.jetbrains.kotlin.config.Services**", // required to initialize `CompilerEnvironment`
+            ),
+            "constant" to emptyList(),
+            "container" to emptyList(),
+            "contracts" to emptyList(),
+            "descriptors" to emptyList(),
+            "extensions" to emptyList(),
+            "idea" to emptyList(),
+            "ir" to emptyList(),
+            "kapt3.diagnostic" to emptyList(),
+            "load" to emptyList(),
+            "metadata" to emptyList(),
+            "modules" to emptyList(),
+            "mpp" to emptyList(),
+            "name" to emptyList(),
+            "platform" to emptyList(),
+            "progress" to emptyList(),
+            "renderer" to emptyList(),
+            "resolve" to emptyList(),
+            "serialization" to emptyList(),
+            "storage" to emptyList(),
+            "types" to emptyList(),
+            "type" to emptyList(),
+            "utils" to emptyList(),
+            "util" to listOf(
+                "org.jetbrains.kotlin.util.Logger", // symbol from a standalone published artifact, don't relocate usages
+                "org.jetbrains.kotlin.util.UtilKt", // class from kotlin-util-io which is a transitive API dependency of KGP-API, don't relocate usages
+                "org.jetbrains.kotlin.util.capitalizeDecapitalize.CapitalizeDecapitalizeKt", // used in standalone published artifacts that the plugin depends on
+            ),
+        )
+        packages.forEach { (pkg, exclusions) ->
+            relocate("$baseSourcePackage.$pkg.", "$baseTargetPackage.$pkg.") {
+                exclusions.forEach { exclude(it) }
+            }
+        }
         transform(KotlinModuleMetadataVersionBasedSkippingTransformer::class.java) {
             /*
              * This excludes .kotlin_module files for compiler modules from the fat jars.
