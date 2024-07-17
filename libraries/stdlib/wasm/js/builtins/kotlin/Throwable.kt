@@ -22,7 +22,7 @@ public open class Throwable(public open val message: String?, public open val ca
 
     public constructor() : this(null, null)
 
-    open internal val jsStack: ExternalInterfaceType = captureStackTrace()
+    internal open val jsStack: ExternalInterfaceType = captureStackTrace()
 
     private var _stack: String? = null
     internal val stack: String
