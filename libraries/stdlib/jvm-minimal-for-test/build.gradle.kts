@@ -107,6 +107,7 @@ kotlin {
                                 "-Xuse-14-inline-classes-mangling-scheme",
                                 "-Xno-new-java-annotation-targets",
                                 "-Xstdlib-compilation",
+                                "-Xsuppress-missing-builtins-error",
                                 "-Xdont-warn-on-error-suppression",
                                 "-opt-in=kotlin.contracts.ExperimentalContracts",
                                 "-opt-in=kotlin.ExperimentalMultiplatform",
