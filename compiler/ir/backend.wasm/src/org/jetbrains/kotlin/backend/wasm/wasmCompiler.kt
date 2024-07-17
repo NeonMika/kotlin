@@ -123,11 +123,14 @@ fun compileWasm(
     generateWat: Boolean = false,
     generateSourceMaps: Boolean = false,
 ): WasmCompilerResult {
+    val useJsTag = backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_JS_TAG)
+
     val compiledWasmModule = WasmCompiledModuleFragment(
         backendContext.irBuiltIns,
         backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS),
-        backendContext.isWasmJsTarget
+        backendContext.isWasmJsTarget && useJsTag,
     )
+
     val codeGenerator = WasmModuleFragmentGenerator(backendContext, compiledWasmModule, allowIncompleteImplementations = allowIncompleteImplementations)
     allModules.forEach { codeGenerator.collectInterfaceTables(it) }
     allModules.forEach { codeGenerator.generateModule(it) }
@@ -167,7 +170,8 @@ fun compileWasm(
     if (backendContext.isWasmJsTarget) {
         jsUninstantiatedWrapper = compiledWasmModule.generateAsyncJsWrapper(
             "./$baseFileName.wasm",
-            backendContext.jsModuleAndQualifierReferences
+            backendContext.jsModuleAndQualifierReferences,
+            useJsTag
         )
         jsWrapper = compiledWasmModule.generateEsmExportsWrapper(
             "./$baseFileName.uninstantiated.mjs",
@@ -213,7 +217,8 @@ ${generateExports()}
 
 fun WasmCompiledModuleFragment.generateAsyncJsWrapper(
     wasmFilePath: String,
-    jsModuleAndQualifierReferences: Set<JsModuleAndQualifierReference>
+    jsModuleAndQualifierReferences: Set<JsModuleAndQualifierReference>,
+    useJsTag: Boolean,
 ): String {
 
     val jsCodeBody = jsFuns.joinToString(",\n") {
@@ -292,7 +297,7 @@ $jsCodeBodyIndented
     const importObject = {
         js_code,
         intrinsics: {
-            js_error_tag: WebAssembly.JSTag  
+            ${if (useJsTag) "js_error_tag: WebAssembly.JSTag" else ""}
         },
 $imports
     };

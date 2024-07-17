@@ -15,12 +15,15 @@ import kotlin.wasm.internal.ExternalInterfaceType
  * */
 public class JsException internal constructor(public val thrownValue: JsAny?) : Throwable() {
     private var _message: String? = null
-    override val message: String?
+    override val message: String
         get() {
             var value = _message
             if (value == null) {
-                value =
-                    if (thrownValue is JsError) thrownValue.message else "Some non-error like JavaScript value was thrown from JavaScript side."
+                value = when (thrownValue) {
+                    is JsError -> thrownValue.message
+                    is JsString -> thrownValue.toString()
+                    else -> "Exception was thrown while running JavaScript code"
+                }
                 _message = value
             }
             return value

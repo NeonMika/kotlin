@@ -623,6 +623,16 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
         }
 
     @Argument(
+        value = "-Xwasm-attach-js-exception",
+        description = "Attach a thrown by JS-value to the JsException class"
+    )
+    var wasmUseJsTag = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xoptimize-generated-js",
         description = "Perform additional optimizations on the generated JS code."
     )

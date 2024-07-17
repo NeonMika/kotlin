@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 class WasmCompiledModuleFragment(
     val irBuiltIns: IrBuiltIns,
     generateTrapsInsteadOfExceptions: Boolean,
-    itsPossibleToCatchJsError: Boolean
+    itsPossibleToCatchJsErrorSeparately: Boolean
 ) {
     val functions =
         ReferencableAndDefinable<IrFunctionSymbol, WasmFunction>()
@@ -61,7 +61,7 @@ class WasmCompiledModuleFragment(
     )
 
     val tags = listOfNotNull(
-        runIf(!generateTrapsInsteadOfExceptions && itsPossibleToCatchJsError) {
+        runIf(!generateTrapsInsteadOfExceptions && itsPossibleToCatchJsErrorSeparately) {
             WasmTag(jsExceptionTagFuncType, WasmImportDescriptor("intrinsics", "js_error_tag"))
         },
         runIf(!generateTrapsInsteadOfExceptions) { WasmTag(throwableTagFuncType) }

@@ -101,7 +101,7 @@ internal class JsExceptionHandlerForThrowableOnly(private val ctx: WasmBackendCo
         val throwableHandlerIndex = aTry.catches.indexOfFirst { it.catchParameter.type == ctx.irBuiltIns.throwableType }
         val activeCatches = if (throwableHandlerIndex == -1) aTry.catches else aTry.catches.subList(0, throwableHandlerIndex + 1)
         // Nothing to do
-        if (aTry.catches.isEmpty() ||
+        if (activeCatches.isEmpty() ||
             activeCatches.any { it.catchParameter.type == ctx.wasmSymbols.jsRelatedSymbols.jsException.defaultType } ||
             throwableHandlerIndex == -1
         ) return super.visitTry(aTry)
