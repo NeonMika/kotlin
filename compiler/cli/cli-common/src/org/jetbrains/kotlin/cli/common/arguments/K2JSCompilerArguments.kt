@@ -626,7 +626,7 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
         value = "-Xwasm-attach-js-exception",
         description = "Attach a thrown by JS-value to the JsException class"
     )
-    var wasmUseJsTag = false
+    var wasmUseJsTag: Boolean? = null
         set(value) {
             checkFrozen()
             field = value
