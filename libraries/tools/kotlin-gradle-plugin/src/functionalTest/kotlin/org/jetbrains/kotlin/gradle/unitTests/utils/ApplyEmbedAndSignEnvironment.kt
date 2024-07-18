@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XcodeEnvironment
 import org.jetbrains.kotlin.gradle.utils.getFile
 
 fun Project.applyEmbedAndSignEnvironment(
-    configuration: String,
-    sdk: String,
-    archs: String,
+    configuration: String = "DEBUG",
+    sdk: String = "iphonesimulator",
+    archs: String = "arm64",
     builtProductsDirectory: String = layout.buildDirectory.dir("products").getFile().canonicalPath,
     targetBuildDirectory: String = layout.buildDirectory.dir("buildDir").getFile().canonicalPath,
 ) {
