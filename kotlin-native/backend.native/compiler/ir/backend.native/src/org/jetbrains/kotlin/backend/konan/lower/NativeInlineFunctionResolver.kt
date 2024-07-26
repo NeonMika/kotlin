@@ -78,6 +78,7 @@ internal class NativeInlineFunctionResolver(
     private fun lower(function: IrFunction, irFile: IrFile, functionIsCached: Boolean) {
         val body = function.body ?: return
 
+        NativeAssertionWrapperLowering(context).lower(function)
         TypeOfLowering(context).lower(body, function, irFile)
 
         NullableFieldsForLateinitCreationLowering(context).lowerWithLocalDeclarations(function)
