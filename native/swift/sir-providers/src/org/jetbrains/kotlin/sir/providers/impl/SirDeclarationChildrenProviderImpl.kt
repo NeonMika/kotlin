@@ -19,6 +19,6 @@ public class SirDeclarationChildrenProviderImpl(private val sirSession: SirSessi
             .filter {
                 with(sirSession) { it.sirVisibility(ktAnalysisSession) == SirVisibility.PUBLIC }
             }
-            .map { with(sirSession) { it.sirDeclaration() } }
+            .map { with(sirSession) { it.sirDeclaration(ktAnalysisSession) } }
             .flatMap { with(sirSession) { listOf(it) + it.trampolineDeclarations() } }
 }

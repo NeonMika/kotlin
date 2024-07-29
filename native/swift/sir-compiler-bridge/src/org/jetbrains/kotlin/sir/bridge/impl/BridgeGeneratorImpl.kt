@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.sir.bridge.impl
 
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.bridge.*
+import org.jetbrains.kotlin.sir.providers.source.KotlinSourceForFactoryFunction
 import org.jetbrains.kotlin.sir.util.*
 
 private const val exportAnnotationFqName = "kotlin.native.internal.ExportedBridge"
@@ -41,16 +42,24 @@ internal class BridgeGeneratorImpl(val typeNamer: SirTypeNamer) : BridgeGenerato
                 )
             }
             is SirInit -> {
-                add(
-                    request.allocationDescriptor.createFunctionBridge(typeNamer) { name, args ->
-                        "kotlin.native.internal.createUninitializedInstance<$name>(${args.joinToString()})"
-                    }
-                )
-                add(
-                    request.initializationDescriptor.createFunctionBridge(typeNamer) { name, args ->
-                        "kotlin.native.internal.initInstance(${args.first()}, ${name}(${args.drop(1).joinToString()}))"
-                    }
-                )
+                if (request.callable.origin is KotlinSourceForFactoryFunction) {
+                    add(
+                        request.descriptor.createFunctionBridge(typeNamer) { name, args ->
+                            "$name(${args.joinToString()})"
+                        }
+                    )
+                } else {
+                    add(
+                        request.allocationDescriptor.createFunctionBridge(typeNamer) { name, args ->
+                            "kotlin.native.internal.createUninitializedInstance<$name>(${args.joinToString()})"
+                        }
+                    )
+                    add(
+                        request.initializationDescriptor.createFunctionBridge(typeNamer) { name, args ->
+                            "kotlin.native.internal.initInstance(${args.first()}, ${name}(${args.drop(1).joinToString()}))"
+                        }
+                    )
+                }
             }
         }
     }
@@ -61,9 +70,14 @@ internal class BridgeGeneratorImpl(val typeNamer: SirTypeNamer) : BridgeGenerato
                 add("return ${request.descriptor.swiftCall(typeNamer)}")
             }
             is SirInit -> {
-                add("let ${obj.name} = ${request.allocationDescriptor.swiftCall(typeNamer)}")
-                add("super.init(__externalRCRef: ${obj.name})")
-                add(request.initializationDescriptor.swiftCall(typeNamer))
+                if (request.callable.origin is KotlinSourceForFactoryFunction) {
+                    add("let ${obj.name} = ${request.descriptor.swiftCall(typeNamer)}")
+                    add("self.init(__externalRCRef: ${obj.name})")
+                } else {
+                    add("let ${obj.name} = ${request.allocationDescriptor.swiftCall(typeNamer)}")
+                    add("super.init(__externalRCRef: ${obj.name})")
+                    add(request.initializationDescriptor.swiftCall(typeNamer))
+                }
             }
         }
     })
@@ -91,11 +105,16 @@ private class BridgeFunctionDescriptor(
 
 private val BridgeRequest.descriptor: BridgeFunctionDescriptor
     get() {
-        require(callable !is SirInit) { "Use allocationDescriptor and initializationDescriptor instead" }
+        require(callable !is SirInit || callable.origin is KotlinSourceForFactoryFunction) { "Use allocationDescriptor and initializationDescriptor instead" }
         return BridgeFunctionDescriptor(
             bridgeName,
             callable.bridgeParameters(),
-            bridgeType(callable.returnType),
+            if (callable.origin is KotlinSourceForFactoryFunction) {
+                val extension = callable.parent as SirExtension
+                Bridge.AsOpaqueObject(extension.extendedType, KotlinType.KotlinObject, CType.Object)
+            } else {
+                bridgeType(callable.returnType)
+            },
             fqName,
             if (callable.kind == SirCallableKind.INSTANCE_METHOD) {
                 val selfType = when (callable) {
@@ -112,7 +131,7 @@ private val obj = BridgeParameter("__kt", bridgeType(SirNominalType(SirSwiftModu
 
 private val BridgeRequest.allocationDescriptor: BridgeFunctionDescriptor
     get() {
-        require(callable is SirInit) { "Use descriptor instead" }
+        require(callable is SirInit && callable.origin !is KotlinSourceForFactoryFunction) { "Use descriptor instead" }
         return BridgeFunctionDescriptor(
             bridgeName + "_allocate",
             emptyList(),
@@ -124,7 +143,7 @@ private val BridgeRequest.allocationDescriptor: BridgeFunctionDescriptor
 
 private val BridgeRequest.initializationDescriptor: BridgeFunctionDescriptor
     get() {
-        require(callable is SirInit) { "Use descriptor instead" }
+        require(callable is SirInit && callable.origin !is KotlinSourceForFactoryFunction) { "Use descriptor instead" }
         return BridgeFunctionDescriptor(
             bridgeName + "_initialize",
             listOf(obj) + callable.bridgeParameters(),

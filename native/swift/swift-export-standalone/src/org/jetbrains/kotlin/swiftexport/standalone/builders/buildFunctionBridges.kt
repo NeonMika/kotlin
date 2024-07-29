@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.bridge.*
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
+import org.jetbrains.kotlin.sir.providers.source.KotlinSourceForFactoryFunction
 import org.jetbrains.kotlin.sir.util.*
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -77,6 +78,18 @@ private fun SirInit.constructBridgeRequests(generator: BridgeGenerator): List<Br
         })
         return emptyList()
     }
+
+    val origin = this.origin
+    if (origin is KotlinSourceForFactoryFunction) {
+        val fqName = origin.symbol.callableId?.asSingleFqName()
+            ?.pathSegments()?.map { it.toString() }
+            ?: return emptyList()
+
+        return listOfNotNull(
+            patchCallableBodyAndGenerateRequest(generator, fqName)
+        )
+    }
+
     val fqName = ((origin as? KotlinSource)?.symbol as? KaConstructorSymbol)
         ?.containingClassId?.asSingleFqName()
         ?.pathSegments()?.map { it.toString() }

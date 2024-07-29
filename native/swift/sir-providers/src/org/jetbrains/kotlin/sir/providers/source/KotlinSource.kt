@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.sir.providers.source
 
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.sir.SirOrigin
@@ -12,6 +13,10 @@ import org.jetbrains.kotlin.sir.SirParameter
 
 public data class KotlinSource(
     val symbol: KaSymbol,
+) : SirOrigin.Foreign.SourceCode
+
+public data class KotlinSourceForFactoryFunction(
+    val symbol: KaNamedFunctionSymbol,
 ) : SirOrigin.Foreign.SourceCode
 
 public class KotlinRuntimeElement : SirOrigin.Foreign.SourceCode

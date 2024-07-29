@@ -52,7 +52,10 @@ public interface SirSession :
 
     override fun KaDeclarationSymbol.sirDeclarationName(): String = with(declarationNamer) { this@sirDeclarationName.sirDeclarationName() }
 
-    override fun KaDeclarationSymbol.sirDeclaration(): SirDeclaration = with(declarationProvider) { this@sirDeclaration.sirDeclaration() }
+    override fun KaDeclarationSymbol.sirDeclaration(kaSession: KaSession): SirDeclaration = with(declarationProvider) { this@sirDeclaration.sirDeclaration(
+        kaSession
+    )
+    }
 
     override fun KaDeclarationSymbol.getSirParent(ktAnalysisSession: KaSession): SirDeclarationParent =
         with(parentProvider) { this@getSirParent.getSirParent(ktAnalysisSession) }
@@ -98,7 +101,7 @@ public interface SirDeclarationNamer {
  * A single entry point to create a lazy wrapper around the given [KaDeclarationSymbol].
  */
 public interface SirDeclarationProvider {
-    public fun KaDeclarationSymbol.sirDeclaration(): SirDeclaration
+    public fun KaDeclarationSymbol.sirDeclaration(kaSession: KaSession): SirDeclaration
 }
 
 /**

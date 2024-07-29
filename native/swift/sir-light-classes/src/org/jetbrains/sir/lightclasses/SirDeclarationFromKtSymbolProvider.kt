@@ -5,11 +5,18 @@
 
 package org.jetbrains.sir.lightclasses
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.sir.SirDeclaration
+import org.jetbrains.kotlin.sir.builder.buildExtension
 import org.jetbrains.kotlin.sir.providers.SirDeclarationProvider
 import org.jetbrains.kotlin.sir.providers.SirSession
+import org.jetbrains.kotlin.sir.providers.source.KotlinSource
+import org.jetbrains.kotlin.sir.providers.utils.updateImports
+import org.jetbrains.kotlin.sir.util.addChild
+import org.jetbrains.sir.lightclasses.extensions.SirAndKaSessionImpl
 import org.jetbrains.sir.lightclasses.nodes.*
 
 public class SirDeclarationFromKtSymbolProvider(
@@ -17,7 +24,8 @@ public class SirDeclarationFromKtSymbolProvider(
     private val sirSession: SirSession,
 ) : SirDeclarationProvider {
 
-    override fun KaDeclarationSymbol.sirDeclaration(): SirDeclaration {
+    @OptIn(KaExperimentalApi::class)
+    override fun KaDeclarationSymbol.sirDeclaration(kaSession: KaSession): SirDeclaration {
         return when (val ktSymbol = this@sirDeclaration) {
             is KaNamedClassSymbol -> {
                 SirClassFromKtSymbol(
@@ -33,12 +41,27 @@ public class SirDeclarationFromKtSymbolProvider(
                     sirSession = sirSession,
                 )
             }
-            is KaFunctionSymbol -> {
-                SirFunctionFromKtSymbol(
-                    ktSymbol = ktSymbol,
-                    ktModule = ktModule,
-                    sirSession = sirSession,
-                )
+            is KaFunctionSymbol -> with(SirAndKaSessionImpl(sirSession, kaSession)) {
+                if (ktSymbol is KaNamedFunctionSymbol && isFactoryThatShouldBeTranslatedToExtensionInit(ktSymbol, kaSession)) {
+                    val extension = buildExtension {
+                        origin = KotlinSource(ktSymbol)
+                        extendedType = ktSymbol.returnType.translateType(
+                            useSiteSession,
+                            reportErrorType = { error("Can't translate return type in ${ktSymbol.render()}: ${it}") },
+                            reportUnsupportedType = { error("Can't translate return type in ${ktSymbol.render()}: type is not supported") },
+                            processTypeImports = ktSymbol.containingModule.sirModule()::updateImports
+                        )
+                    }
+                    extension.addChild { SirInitFromKtFactoryFunctionSymbol(ktSymbol, ktModule, sirSession) }
+                    extension.parent = ktSymbol.containingModule.sirModule()
+                    extension
+                } else {
+                    SirFunctionFromKtSymbol(
+                        ktSymbol = ktSymbol,
+                        ktModule = ktModule,
+                        sirSession = sirSession,
+                    )
+                }
             }
             is KaVariableSymbol -> {
                 SirVariableFromKtSymbol(
