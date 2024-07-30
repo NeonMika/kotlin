@@ -62,3 +62,24 @@ abstract class KlibAssertionWrapperLowering(val context: CommonBackendContext) :
         }
     }
 }
+
+/**
+ * This lowering replaces `isAssertionThrowingExceptionEnabled` and `isAssertionArgumentEvaluationEnabled` intrinsics with actual value,
+ * depending on the assertion mode.
+ */
+abstract class KlibAssertionRemoverLowering(val context: CommonBackendContext, val assertionsEnabled: Boolean) : FileLoweringPass {
+    protected abstract val isAssertionThrowingExceptionEnabled: IrSimpleFunctionSymbol
+    protected abstract val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol
+
+    override fun lower(irFile: IrFile) {
+        irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
+            override fun visitCall(expression: IrCall): IrExpression {
+                if (expression.symbol != isAssertionThrowingExceptionEnabled && expression.symbol != isAssertionArgumentEvaluationEnabled) {
+                    return super.visitCall(expression)
+                }
+
+                return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, assertionsEnabled)
+            }
+        })
+    }
+}
