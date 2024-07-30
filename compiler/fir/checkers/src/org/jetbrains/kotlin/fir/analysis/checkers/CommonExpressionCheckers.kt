@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.fir.analysis.checkers
 
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.CanBeReplacedWithOperatorAssignmentChecker
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.RedundantCallOfConversionMethod
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.UselessCallOnNotNullChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.syntax.*
 
 object CommonExpressionCheckers : ExpressionCheckers() {
@@ -56,6 +59,8 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirMissingDependencySupertypeInQualifiedAccessExpressionsChecker,
             FirArrayOfNothingQualifierChecker,
             FirPrivateToThisAccessChecker,
+            RedundantCallOfConversionMethod,
+            UselessCallOnNotNullChecker,
         )
 
     override val callCheckers: Set<FirCallChecker>
@@ -93,6 +98,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirReassignmentAndInvisibleSetterChecker,
             FirAssignmentTypeMismatchChecker,
             FirInlineBodyVariableAssignmentChecker,
+            CanBeReplacedWithOperatorAssignmentChecker,
         )
 
     override val whenExpressionCheckers: Set<FirWhenExpressionChecker>

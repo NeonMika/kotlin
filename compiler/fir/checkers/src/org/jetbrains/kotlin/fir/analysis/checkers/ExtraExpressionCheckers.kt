@@ -14,17 +14,6 @@ object ExtraExpressionCheckers : ExpressionCheckers() {
             ArrayEqualityCanBeReplacedWithEquals,
         )
 
-    override val variableAssignmentCheckers: Set<FirVariableAssignmentChecker>
-        get() = setOf(
-            CanBeReplacedWithOperatorAssignmentChecker,
-        )
-
-    override val qualifiedAccessExpressionCheckers: Set<FirQualifiedAccessExpressionChecker>
-        get() = setOf(
-            RedundantCallOfConversionMethod,
-            UselessCallOnNotNullChecker,
-        )
-
     override val functionCallCheckers: Set<FirFunctionCallChecker>
         get() = setOf(
             EmptyRangeChecker,
