@@ -360,7 +360,7 @@ internal constructor(
         message = "This property will be removed in future releases. Don't use it in your code.",
     )
     @get:Internal
-    val konanHome: Provider<String> = kotlinNativeProvider.map { it.bundleDirectory.get().asFile.absolutePath }
+    val konanHome: Provider<String> = kotlinNativeProvider.flatMap { it.bundleDirectory }
 
     @get:Nested
     override val multiplatformStructure: K2MultiplatformStructure = objectFactory.newInstance()
@@ -419,7 +419,7 @@ internal constructor(
         get() = compilerOptions.freeCompilerArgs as Provider<Collection<String>>
 
     private val runnerSettings = KotlinNativeCompilerRunner.Settings.of(
-        kotlinNativeProvider.get().bundleDirectory.getFile().absolutePath,
+        kotlinNativeProvider.get().bundleDirectory.get(),
         kotlinNativeProvider.get().konanDataDir.orNull,
         project
     )
@@ -1107,7 +1107,7 @@ abstract class CInteropProcess @Inject internal constructor(params: Params) :
         message = "This property will be removed in future releases. Don't use it in your code.",
     )
     @get:Internal
-    val konanHome: Provider<String> = kotlinNativeProvider.map { it.bundleDirectory.get().asFile.absolutePath }
+    val konanHome: Provider<String> = kotlinNativeProvider.flatMap { it.bundleDirectory }
 
     private val kotlinNativeCompilerJar = project.nativeProperties.kotlinNativeCompilerJar
     private val actualNativeHomeDirectory = project.nativeProperties.actualNativeHomeDirectory

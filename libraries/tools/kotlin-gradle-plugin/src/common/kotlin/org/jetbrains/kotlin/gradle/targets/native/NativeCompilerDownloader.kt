@@ -15,6 +15,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
 import org.jetbrains.kotlin.compilerRunner.KotlinNativeToolRunner
+import org.jetbrains.kotlin.compilerRunner.getKonanCacheKind
 import org.jetbrains.kotlin.gradle.internal.ClassLoadersCachingBuildService
 import org.jetbrains.kotlin.gradle.internal.properties.nativeProperties
 import org.jetbrains.kotlin.gradle.logging.kotlinInfo
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.gradle.report.GradleBuildMetricsReporter
 import org.jetbrains.kotlin.gradle.targets.native.internal.NativeDistributionTypeProvider
 import org.jetbrains.kotlin.gradle.targets.native.internal.PlatformLibrariesGenerator
 import org.jetbrains.kotlin.gradle.targets.native.konanPropertiesBuildService
+import org.jetbrains.kotlin.internal.compilerRunner.native.kotlinNativeCompilerJar
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.DependencyDirectories
@@ -60,7 +62,7 @@ class NativeCompilerDownloader(
 
         internal fun getCompilerDirectory(
             project: Project,
-            konanDataDirProperty: Provider<File?>
+            konanDataDirProperty: Provider<File?>,
         ): File {
             return DependencyDirectories
                 .getLocalKonanDir(konanDataDirProperty.orNull?.absolutePath)
@@ -88,7 +90,8 @@ class NativeCompilerDownloader(
         }
 
         private fun getDependencyName(project: Project): String {
-            val dependencySuffix = NativeDistributionTypeProvider(project).getDistributionType().suffix
+            val dependencySuffix =
+                NativeDistributionTypeProvider(PropertiesProvider(project).nativeDistributionType).getDistributionType().suffix
             return if (dependencySuffix != null) {
                 "kotlin-native-$dependencySuffix"
             } else {
@@ -281,18 +284,26 @@ internal fun Project.setupNativeCompiler(konanTarget: KonanTarget) {
         logger.info("User-provided Kotlin/Native distribution: ${nativeProperties.userProvidedNativeHome.orNull}")
     }
 
-    val distributionType = NativeDistributionTypeProvider(project).getDistributionType()
+    val distributionType = NativeDistributionTypeProvider(PropertiesProvider(project).nativeDistributionType).getDistributionType()
     if (distributionType.mustGeneratePlatformLibs) {
+        val nativeProperties = project.nativeProperties
         PlatformLibrariesGenerator(
             project.objects,
             konanTarget,
-            project.kotlinPropertiesProvider,
+            project.kotlinPropertiesProvider.kotlinCompilerArgumentsLogLevel,
             project.konanPropertiesBuildService,
             project.objects.property(GradleBuildMetricsReporter()),
             ClassLoadersCachingBuildService.registerIfAbsent(project),
             PlatformLibrariesGenerator.registerRequiredServiceIfAbsent(project),
             project.useXcodeMessageStyle,
-            project.nativeProperties
+            project.objects.fileCollection().from(
+                project.nativeProperties.kotlinNativeCompilerJar,
+                project.nativeProperties.actualNativeHomeDirectory.map { it.resolve("konan/lib/trove4j.jar") },
+            ),
+            project.listProperty { nativeProperties.jvmArgs.get() },
+            nativeProperties.actualNativeHomeDirectory,
+            project.provider { nativeProperties.konanDataDir.orNull?.absolutePath },
+            project.nativeProperties.getKonanCacheKind(konanTarget, project.konanPropertiesBuildService),
         ).generatePlatformLibsIfNeeded()
     }
 }
