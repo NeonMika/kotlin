@@ -36,11 +36,11 @@ abstract class AbstractCollectDiagnosticsTest : AbstractAnalysisApiBasedTest() {
 
         analyseForTest(ktFile) {
             val diagnosticsInFile =
-                ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTRA_AND_COMMON_CHECKERS).map { it.getKey() }.sorted()
+                ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTRA_AND_DEFAULT_CHECKERS).map { it.getKey() }.sorted()
             val diagnosticsFromElements = buildList {
                 ktFile.accept(object : KtTreeVisitorVoid() {
                     override fun visitKtElement(element: KtElement) {
-                        for (diagnostic in element.diagnostics(KaDiagnosticCheckerFilter.EXTRA_AND_COMMON_CHECKERS)) {
+                        for (diagnostic in element.diagnostics(KaDiagnosticCheckerFilter.EXTRA_AND_DEFAULT_CHECKERS)) {
                             add(element to diagnostic.getKey())
                         }
                         super.visitKtElement(element)
