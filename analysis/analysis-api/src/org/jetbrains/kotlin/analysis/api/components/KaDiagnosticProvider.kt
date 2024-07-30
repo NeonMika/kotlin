@@ -39,8 +39,8 @@ public interface KaDiagnosticProvider {
 
 public enum class KaDiagnosticCheckerFilter {
     ONLY_COMMON_CHECKERS,
-    ONLY_EXTENDED_CHECKERS,
-    EXTENDED_AND_COMMON_CHECKERS,
+    ONLY_EXTRA_CHECKERS,
+    EXTRA_AND_COMMON_CHECKERS,
 }
 
 @Deprecated("Use 'KaDiagnosticCheckerFilter' instead.", replaceWith = ReplaceWith("KaDiagnosticCheckerFilter"))
