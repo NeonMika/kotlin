@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.container.topologicalSort
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.checkers.registerExperimentalCheckers
 import org.jetbrains.kotlin.fir.checkers.registerExtraCommonCheckers
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
@@ -291,6 +292,9 @@ open class FirFrontendFacade(
         val sessionConfigurator: FirSessionConfigurator.() -> Unit = {
             if (FirDiagnosticsDirectives.WITH_EXTRA_CHECKERS in module.directives) {
                 registerExtraCommonCheckers()
+            }
+            if (FirDiagnosticsDirectives.WITH_EXPERIMENTAL_CHECKERS in module.directives) {
+                registerExperimentalCheckers()
             }
             additionalSessionConfiguration?.invoke(this)
         }
