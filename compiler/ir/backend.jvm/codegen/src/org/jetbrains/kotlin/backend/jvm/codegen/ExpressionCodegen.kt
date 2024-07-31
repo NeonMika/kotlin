@@ -473,7 +473,7 @@ class ExpressionCodegen(
     override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock, data: BlockInfo): PromisedValue {
         val info = BlockInfo(data)
 
-        val inlineCall = inlinedBlock.inlineCall
+        val inlineCall = inlinedBlock.inlineCall!!
         val callee = inlinedBlock.inlineDeclaration as? IrFunction
 
         // 1. Evaluate NON DEFAULT arguments from inline function call
@@ -551,6 +551,7 @@ class ExpressionCodegen(
         }
 
         val callee = this.inlineDeclaration
+        val inlineCall = this.inlineCall!!
         val calleeFromActualClass = callee.getClassWithDeclaredFunction()!!.declarations
             .asSequence()
             .filterIsInstance<IrSimpleFunction>()

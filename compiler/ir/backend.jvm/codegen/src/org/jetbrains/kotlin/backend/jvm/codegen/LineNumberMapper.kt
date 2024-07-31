@@ -6,9 +6,6 @@
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.common.ir.extractDeclarationWhereGivenElementWasInlined
-import org.jetbrains.kotlin.ir.util.inlineDeclaration
-import org.jetbrains.kotlin.ir.util.isFunctionInlining
-import org.jetbrains.kotlin.ir.util.isLambdaInlining
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.ir.fileParentBeforeInline
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineOnly
@@ -25,10 +22,7 @@ import org.jetbrains.kotlin.ir.expressions.IrCallableReference
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrInlinedFunctionBlock
-import org.jetbrains.kotlin.ir.util.fileEntry
-import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.ir.util.parentClassOrNull
-import org.jetbrains.kotlin.ir.util.statements
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.org.objectweb.asm.Label
 import kotlin.contracts.ExperimentalContracts
@@ -124,7 +118,7 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
 
     fun afterIrInline(inlinedBlock: IrInlinedFunctionBlock) {
         if (inlinedBlock.isFunctionInlining()) {
-            val callLineNumber = getLineNumberForOffset(inlinedBlock.inlineCall.startOffset)
+            val callLineNumber = getLineNumberForOffset(inlinedBlock.inlineCall!!.startOffset)
             // `takeUnless` is required to avoid `markLineNumberAfterInlineIfNeeded` for inline only
             lastLineNumber = callLineNumber.takeUnless { noLineNumberScope } ?: -1
             markLineNumberAfterInlineIfNeeded(expressionCodegen.isInsideCondition)
@@ -167,7 +161,7 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
     }
 
     fun buildSmapFor(inlinedBlock: IrInlinedFunctionBlock, classSMAP: SMAP, data: BlockInfo) {
-        val inlineCall = inlinedBlock.inlineCall
+        val inlineCall = inlinedBlock.inlineCall!!
 
         val newData = if (inlinedBlock.isLambdaInlining()) {
             val callSite = smapStack.firstOrNull()?.smap?.callSite?.takeIf { inlinedBlock.isInvokeOnDefaultArg() }
@@ -223,7 +217,7 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
     }
 
     private fun setUpAdditionalLineNumbersBeforeLambdaInlining(inlinedBlock: IrInlinedFunctionBlock) {
-        val lineNumberForOffset = getLineNumberForOffset(inlinedBlock.inlineCall.startOffset)
+        val lineNumberForOffset = getLineNumberForOffset(inlinedBlock.inlineCall!!.startOffset)
         val callee = inlinedBlock.inlineDeclaration as? IrFunction
 
         // TODO: reuse code from org/jetbrains/kotlin/codegen/inline/MethodInliner.kt:267
@@ -245,7 +239,8 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
     }
 
     private fun setUpAdditionalLineNumbersAfterLambdaInlining(inlinedBlock: IrInlinedFunctionBlock) {
-        val lineNumberForOffset = getLineNumberForOffset(inlinedBlock.inlineCall.startOffset)
+        val inlineCall = inlinedBlock.inlineCall!!
+        val lineNumberForOffset = getLineNumberForOffset(inlineCall.startOffset)
 
         // TODO: reuse code from org/jetbrains/kotlin/codegen/inline/MethodInliner.kt:316
         val overrideLineNumber = smapStack
@@ -258,7 +253,7 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
                 expressionCodegen.mv.visitLineNumber(currentLineNumber, markNewLabel())
             } else {
                 // Need to go through the superclass here to properly remap the line number via `sourceMapper`.
-                markLineNumber(inlinedBlock.inlineCall, startOffset = true)
+                markLineNumber(inlineCall, startOffset = true)
             }
             expressionCodegen.mv.nop()
         }
@@ -278,7 +273,7 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
     }
 
     private fun IrInlinedFunctionBlock.isInvokeOnDefaultArg(): Boolean {
-        val call = this.inlineCall
+        val call = this.inlineCall!!
         val expected = this.inlineDeclaration
         if (call.symbol.owner.name != OperatorNameConventions.INVOKE) return false
 

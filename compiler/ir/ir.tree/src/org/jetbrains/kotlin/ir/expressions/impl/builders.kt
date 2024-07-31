@@ -425,7 +425,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset: Int,
     endOffset: Int,
     type: IrType,
-    inlineCall: IrFunctionAccessExpression,
     inlinedElement: IrElement,
     origin: IrStatementOrigin? = null,
 ) = IrInlinedFunctionBlockImpl(
@@ -433,7 +432,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
-    inlineCall = inlineCall,
     inlinedElement = inlinedElement,
     origin = origin,
 )
@@ -442,7 +440,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset: Int,
     endOffset: Int,
     type: IrType,
-    inlineCall: IrFunctionAccessExpression,
     inlinedElement: IrElement,
     origin: IrStatementOrigin?,
     statements: List<IrStatement>,
@@ -451,7 +448,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
-    inlineCall = inlineCall,
     inlinedElement = inlinedElement,
     origin = origin,
 ).apply {
