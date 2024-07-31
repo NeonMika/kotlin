@@ -3073,7 +3073,7 @@ open class PsiRawFirBuilder(
             return result.apply {
                 this.explicitReceiver = receiverForInvoke
                 typeArguments.appendTypeArguments(expression.typeArguments)
-            }.build()
+            }.build().pullUpSafeCallIfNecessary()
         }
 
         override fun visitArrayAccessExpression(expression: KtArrayAccessExpression, data: FirElement?): FirElement {
