@@ -35,6 +35,5 @@ internal class AssertRemovalLowering(val context: Context) : BodyLoweringPass {
 }
 
 internal class NativeAssertionWrapperLowering(context: Context) : KlibAssertionWrapperLowering(context) {
-    override val isAssertionThrowingExceptionEnabled: IrSimpleFunctionSymbol = context.ir.symbols.isAssertionThrowingExceptionEnabled
     override val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol = context.ir.symbols.isAssertionArgumentEvaluationEnabled
 }
