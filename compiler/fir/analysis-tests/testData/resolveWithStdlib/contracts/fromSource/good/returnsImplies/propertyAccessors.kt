@@ -14,7 +14,7 @@ var Any?.isNotNull: Boolean
     }
     set(value) {
         <!CONTRACT_NOT_ALLOWED!>contract<!> {
-            returns() implies (this@isNotNull != null)
+            <!WRONG_IMPLIES_CONDITION!>returns() implies (this@isNotNull != null)<!>
             require(<!SENSELESS_COMPARISON!>this != null<!>)
         }
     }
