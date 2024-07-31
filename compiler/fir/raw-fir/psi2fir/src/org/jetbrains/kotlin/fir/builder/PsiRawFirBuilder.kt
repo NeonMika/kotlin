@@ -3023,8 +3023,7 @@ open class PsiRawFirBuilder(
                             source = defaultSource.fakeElement(KtFakeSourceElementKind.ImplicitInvokeCall)
                             name = OperatorNameConventions.INVOKE
                         },
-                        receiverExpression = parenthesizedArgument,
-                        isImplicitInvoke = true
+                        receiverForInvoke = parenthesizedArgument,
                     )
                 }
 
@@ -3043,16 +3042,16 @@ open class PsiRawFirBuilder(
                             source = defaultSource.fakeElement(KtFakeSourceElementKind.ImplicitInvokeCall)
                             name = OperatorNameConventions.INVOKE
                         },
-                        receiverExpression = calleeExpression.toFirExpression("Incorrect invoke receiver"),
-                        isImplicitInvoke = true
+                        receiverForInvoke = calleeExpression.toFirExpression("Incorrect invoke receiver"),
                     )
                 }
             }
         }
 
+        // In non-erroneous code, it's either `f()` (without explicit receiver) or `(expr)()` which is transformed to `expr.invoke()`
         override fun visitCallExpression(expression: KtCallExpression, data: FirElement?): FirElement {
             val source = expression.toFirSourceElement()
-            val (calleeReference, explicitReceiver, isImplicitInvoke) = splitToCalleeAndReceiver(expression.calleeExpression, source)
+            val (calleeReference, receiverForInvoke) = splitToCalleeAndReceiver(expression.calleeExpression, source)
 
             val result: FirQualifiedAccessExpressionBuilder =
                 if (expression.valueArgumentList == null && expression.lambdaArguments.isEmpty()) {
@@ -3061,7 +3060,7 @@ open class PsiRawFirBuilder(
                         this.calleeReference = calleeReference
                     }
                 } else {
-                    val builder = if (isImplicitInvoke) FirImplicitInvokeCallBuilder() else FirFunctionCallBuilder()
+                    val builder = if (receiverForInvoke != null) FirImplicitInvokeCallBuilder() else FirFunctionCallBuilder()
                     builder.apply {
                         this.source = source
                         this.calleeReference = calleeReference
@@ -3072,7 +3071,7 @@ open class PsiRawFirBuilder(
                 }
 
             return result.apply {
-                this.explicitReceiver = explicitReceiver
+                this.explicitReceiver = receiverForInvoke
                 typeArguments.appendTypeArguments(expression.typeArguments)
             }.build()
         }
