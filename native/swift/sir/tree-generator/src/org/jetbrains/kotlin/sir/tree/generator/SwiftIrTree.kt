@@ -94,6 +94,7 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         parent(declarationContainer)
 
         +field("superClass", typeType, nullable = true)
+        +field("modality", modalityKind, nullable = true)
     }
 
     val `typealias`: Element by element {
