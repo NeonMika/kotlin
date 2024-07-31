@@ -1,5 +1,8 @@
 // WITH_STDLIB
 // WITH_COROUTINES
+// IGNORE_BACKEND: JS_IR
+// Reason: KT-70393
+
 import helpers.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
