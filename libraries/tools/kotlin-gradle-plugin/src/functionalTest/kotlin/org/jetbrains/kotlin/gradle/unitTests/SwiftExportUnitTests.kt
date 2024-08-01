@@ -258,6 +258,11 @@ class SwiftExportUnitTests {
         val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
         val modules = swiftExportTask.parameters.swiftModules.get()
 
+        assertEquals(
+            listOf("Subproject", "KotlinxCoroutinesCore"),
+            modules.map { it.moduleName },
+        )
+
         val subProject = modules.single { it.moduleName == "Subproject" }
         assertEquals(subProject.moduleName, "Subproject")
         assertEquals(subProject.artifact.name, "subproject.klib")
