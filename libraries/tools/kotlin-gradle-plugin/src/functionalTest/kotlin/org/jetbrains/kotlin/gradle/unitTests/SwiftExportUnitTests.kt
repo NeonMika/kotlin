@@ -226,6 +226,12 @@ class SwiftExportUnitTests {
             swiftexport {
                 export(subproject)
                 export("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
+
+                binaries {
+                    linkTaskProvider.configure {
+                        freeCompilerArgs += "-opt-in=some.value"
+                    }
+                }
             }
         }
 
@@ -239,6 +245,7 @@ class SwiftExportUnitTests {
         )
 
         assertNotNull(arm64SimLib)
+        assertEquals(arm64SimLib.freeCompilerArgs.single(), "-opt-in=some.value")
 
         val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
         val modules = swiftExportTask.parameters.swiftModules.get()
