@@ -347,6 +347,30 @@ public fun __root___var_object_wp_set(newValue: kotlin.native.internal.NativePtr
     var_object_wp = __newValue
 }
 
+@ExportedBridge("ignored_OPEN_CLASS_init_allocate")
+public fun ignored_OPEN_CLASS_init_allocate(): kotlin.native.internal.NativePtr {
+    val _result = kotlin.native.internal.createUninitializedInstance<ignored.OPEN_CLASS>()
+    return kotlin.native.internal.ref.createRetainedExternalRCRef(_result)
+}
+
+@ExportedBridge("ignored_OPEN_CLASS_init_initialize__TypesOfArguments__uintptr_t__")
+public fun ignored_OPEN_CLASS_init_initialize(__kt: kotlin.native.internal.NativePtr): Unit {
+    val ____kt = kotlin.native.internal.ref.dereferenceExternalRCRef(__kt)
+    kotlin.native.internal.initInstance(____kt, ignored.OPEN_CLASS())
+}
+
+@ExportedBridge("ignored_produce_OPEN_CLASS")
+public fun ignored_produce_OPEN_CLASS(): kotlin.native.internal.NativePtr {
+    val _result = ignored.produce_OPEN_CLASS()
+    return kotlin.native.internal.ref.createRetainedExternalRCRef(_result)
+}
+
+@ExportedBridge("ignored_recieve_OPEN_CLASS__TypesOfArguments__uintptr_t__")
+public fun ignored_recieve_OPEN_CLASS(x: kotlin.native.internal.NativePtr): Unit {
+    val __x = kotlin.native.internal.ref.dereferenceExternalRCRef(x) as ignored.OPEN_CLASS
+    ignored.recieve_OPEN_CLASS(__x)
+}
+
 @ExportedBridge("namespace_deeper_Class_with_package_INNER_CLASS_init_allocate")
 public fun namespace_deeper_Class_with_package_INNER_CLASS_init_allocate(): kotlin.native.internal.NativePtr {
     val _result = kotlin.native.internal.createUninitializedInstance<namespace.deeper.Class_with_package.INNER_CLASS>()

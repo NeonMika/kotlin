@@ -105,6 +105,14 @@ uintptr_t __root___var_object_wp_get();
 
 void __root___var_object_wp_set__TypesOfArguments__uintptr_t__(uintptr_t newValue);
 
+uintptr_t ignored_OPEN_CLASS_init_allocate();
+
+void ignored_OPEN_CLASS_init_initialize__TypesOfArguments__uintptr_t__(uintptr_t __kt);
+
+uintptr_t ignored_produce_OPEN_CLASS();
+
+void ignored_recieve_OPEN_CLASS__TypesOfArguments__uintptr_t__(uintptr_t x);
+
 uintptr_t namespace_deeper_Class_with_package_INNER_CLASS_init_allocate();
 
 void namespace_deeper_Class_with_package_INNER_CLASS_init_initialize__TypesOfArguments__uintptr_t__(uintptr_t __kt);

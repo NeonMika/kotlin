@@ -47,7 +47,7 @@ enum class ENUM {
 typealias enumClass = ENUM
 
 interface OUTSIDE_PROTO {
-    open class INSIDE_PROTO
+    abstract class INSIDE_PROTO
 }
 typealias outerInterface = OUTSIDE_PROTO
 typealias innerInterface = OUTSIDE_PROTO.INSIDE_PROTO
