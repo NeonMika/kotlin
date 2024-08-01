@@ -241,11 +241,7 @@ class SwiftExportUnitTests {
         assertNotNull(arm64SimLib)
 
         val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
-        val configuration = swiftExportTask.configuration.get()
-
-        assertEquals("LazyResolvedConfiguration(configuration='${arm64SimLib.exportConfigurationName}')", configuration.toString())
-
-        val modules = swiftExportTask.swiftExportedModules().get()
+        val modules = swiftExportTask.parameters.swiftModules.get()
 
         val subProject = modules.single { it.moduleName == "Subproject" }
         assertEquals(subProject.moduleName, "Subproject")
@@ -254,10 +250,6 @@ class SwiftExportUnitTests {
         val kotlinXCoroutines = modules.single { it.moduleName == "KotlinxCoroutinesCore" }
         assertEquals(kotlinXCoroutines.moduleName, "KotlinxCoroutinesCore")
         assertEquals(kotlinXCoroutines.artifact.name, "kotlinx-coroutines-core.klib")
-
-        val atomicFu = modules.single { it.moduleName == "Shared" }
-        assertEquals(atomicFu.moduleName, "Shared")
-        assertEquals(atomicFu.artifact.name, "shared.klib")
     }
 
     @Test
