@@ -78,9 +78,6 @@ class SwiftExportIT : KGPBaseTest() {
             gradleVersion,
         ) {
             projectPath.enableSwiftExport()
-            projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/Subproject.kt").deleteExisting()
-            projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/UglySubproject.kt").deleteExisting()
-
 
             build(
                 ":shared:embedSwiftExportForXcode",
