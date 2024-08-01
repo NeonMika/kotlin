@@ -7,7 +7,8 @@ package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
-import org.jetbrains.kotlin.gradle.util.replaceText
+import org.jetbrains.kotlin.gradle.util.SimpleSwiftExportProperties
+import org.jetbrains.kotlin.gradle.util.enableSwiftExport
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
@@ -33,12 +34,6 @@ class SwiftExportDslIT : KGPBaseTest() {
             projectPath.enableSwiftExport()
             projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/Subproject.kt").deleteExisting()
             projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/UglySubproject.kt").deleteExisting()
-            replaceDefaultDslBlock(
-                """
-                |    @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-                |    swiftexport {}
-                """.trimMargin()
-            )
 
             build(
                 ":shared:embedSwiftExportForXcode",
@@ -77,25 +72,10 @@ class SwiftExportDslIT : KGPBaseTest() {
             gradleVersion,
         ) {
             projectPath.enableSwiftExport()
-            replaceDefaultDslBlock(
-                """
-                |    @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-                |    swiftexport {
-                |       export(project(":subproject"))
-                |       export(project(":not-good-looking-project-name"))
-                |    }
-                |    
-                |    sourceSets {
-                |        commonMain.dependencies {
-                |            implementation(project(":subproject"))
-                |            implementation(project(":not-good-looking-project-name"))
-                |        }
-                |    }
-                """.trimMargin()
-            )
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_EXPORT}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -144,26 +124,10 @@ class SwiftExportDslIT : KGPBaseTest() {
         ) {
             projectPath.enableSwiftExport()
             projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/UglySubproject.kt").deleteExisting()
-            replaceDefaultDslBlock(
-                """
-                |    @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-                |    swiftexport {
-                |       moduleName.set("CustomShared")
-                |       export(project(":subproject")) {
-                |           moduleName.set("CustomSubProject")
-                |       }
-                |    }
-                |    
-                |    sourceSets {
-                |        commonMain.dependencies {
-                |            implementation(project(":subproject"))
-                |        }
-                |    }
-                """.trimMargin()
-            )
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_CUSTOM_NAME}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -205,26 +169,10 @@ class SwiftExportDslIT : KGPBaseTest() {
         ) {
             projectPath.enableSwiftExport()
             projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/UglySubproject.kt").deleteExisting()
-            replaceDefaultDslBlock(
-                """
-                |    @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-                |    swiftexport {
-                |       flattenPackage.set("com.github.jetbrains.swiftexport")
-                |       export(project(":subproject")) {
-                |           flattenPackage.set("com.subproject.library")
-                |       }
-                |    }
-                |    
-                |    sourceSets {
-                |        commonMain.dependencies {
-                |            implementation(project(":subproject"))
-                |        }
-                |    }
-                """.trimMargin()
-            )
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_FLATTEN_PACKAGE}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -243,33 +191,4 @@ class SwiftExportDslIT : KGPBaseTest() {
             }
         }
     }
-}
-
-private fun GradleProject.replaceDefaultDslBlock(replacement: String) {
-
-    projectPath.resolve("shared/build.gradle.kts").replaceText(
-        """
-        |    @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-        |    swiftexport {
-        |        moduleName.set("Shared")
-        |        flattenPackage.set("com.github.jetbrains.swiftexport")
-        |
-        |        export(project(":not-good-looking-project-name"))
-        |
-        |        export(project(":subproject")) {
-        |            moduleName.set("Subproject")
-        |            flattenPackage.set("com.subproject.library")
-        |        }
-        |    }
-        |
-        |    sourceSets {
-        |        commonMain.dependencies {
-        |            implementation(project(":subproject"))
-        |            implementation(project(":not-good-looking-project-name"))
-        |        }
-        |    }
-        """.trimMargin(),
-        replacement
-    )
-
 }

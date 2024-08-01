@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.util.SimpleSwiftExportProperties
+import org.jetbrains.kotlin.gradle.util.enableSwiftExport
 import org.jetbrains.kotlin.gradle.util.replaceText
 import org.jetbrains.kotlin.gradle.util.runProcess
 import org.junit.jupiter.api.DisplayName
@@ -37,6 +39,7 @@ class SwiftExportIT : KGPBaseTest() {
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_EXPORT}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -75,6 +78,9 @@ class SwiftExportIT : KGPBaseTest() {
             gradleVersion,
         ) {
             projectPath.enableSwiftExport()
+            projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/Subproject.kt").deleteExisting()
+            projectPath.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/swiftexport/UglySubproject.kt").deleteExisting()
+
 
             build(
                 ":shared:embedSwiftExportForXcode",
@@ -137,6 +143,7 @@ class SwiftExportIT : KGPBaseTest() {
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_EXPORT}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir, listOf("arm64", "x86_64"), "iphonesimulator"),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -175,6 +182,7 @@ class SwiftExportIT : KGPBaseTest() {
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_EXPORT}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -211,6 +219,7 @@ class SwiftExportIT : KGPBaseTest() {
 
             build(
                 ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_EXPORT}",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir, listOf("arm64", "x86_64"), "iphonesimulator"),
                 buildOptions = defaultBuildOptions.copy(
                     configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
@@ -303,14 +312,3 @@ private fun swiftCompile(workingDir: File, libDir: File, target: String) = runPr
     ),
     workingDir
 )
-
-internal fun Path.enableSwiftExport() {
-    resolve("local.properties")
-        .also { if (!it.exists()) it.createFile() }
-        .appendText(
-            """
-            
-            kotlin.experimental.swift-export.enabled=true
-            """.trimIndent()
-        )
-}
