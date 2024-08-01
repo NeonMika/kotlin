@@ -78,24 +78,33 @@ abstract class KlibAssertionRemoverLowering(
     override fun lower(irFile: IrFile) {
         irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitWhen(expression: IrWhen): IrExpression {
-                if (argumentEvaluationEnabled || expression.branches.size != 1) return super.visitWhen(expression)
-                val condition = expression.branches.first().condition
+                if (expression.branches.size != 1) return super.visitWhen(expression)
 
-                // argumentEvaluationEnable == false
-                if (condition is IrCall && condition.symbol == isAssertionArgumentEvaluationEnabled) {
-                    return IrCompositeImpl(expression.startOffset, expression.endOffset, expression.type)
+                val branch = expression.branches.first()
+                val condition = branch.condition
+                if (condition !is IrCall) return super.visitWhen(expression)
+
+                val flag = when (condition.symbol) {
+                    isAssertionThrowingErrorEnabled -> throwingErrorEnabled
+                    isAssertionArgumentEvaluationEnabled -> argumentEvaluationEnabled
+                    else -> return super.visitWhen(expression)
                 }
 
-                return super.visitWhen(expression)
+                return if (flag) {
+                    branch.result.transform(this, null)
+                } else {
+                    IrCompositeImpl(expression.startOffset, expression.endOffset, expression.type)
+                }
             }
 
+            // This one is a fallback if for some reason we didn't eliminate intrinsics on the previous step
             override fun visitCall(expression: IrCall): IrExpression {
-                if (expression.symbol == isAssertionArgumentEvaluationEnabled) {
-                    return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, argumentEvaluationEnabled)
-                }
-
                 if (expression.symbol == isAssertionThrowingErrorEnabled) {
                     return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, throwingErrorEnabled)
+                }
+
+                if (expression.symbol == isAssertionArgumentEvaluationEnabled) {
+                    return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, argumentEvaluationEnabled)
                 }
 
                 return super.visitCall(expression)
