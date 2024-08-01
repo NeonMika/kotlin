@@ -442,7 +442,7 @@ internal class KonanSymbols(
     val enumVarConstructorSymbol = lookup.findPrimaryConstructor(interopClass(InteropFqNames.cEnumVarName))!!
     val primitiveVarPrimaryConstructor = lookup.findPrimaryConstructor(lookup.findNestedClass(interopClass(InteropFqNames.cPrimitiveVarName), Name.identifier(InteropFqNames.TypeName))!!)!!
 
-    val isAssertionThrowingExceptionEnabled = irBuiltIns.findFunctions(Name.identifier("isAssertionThrowingExceptionEnabled"), FqName("kotlin")).single()
+    val isAssertionThrowingErrorEnabled = irBuiltIns.findFunctions(Name.identifier("isAssertionThrowingErrorEnabled"), FqName("kotlin")).single()
     val isAssertionArgumentEvaluationEnabled = irBuiltIns.findFunctions(Name.identifier("isAssertionArgumentEvaluationEnabled"), FqName("kotlin")).single()
 
     private fun topLevelClass(fqName: FqName): IrClassSymbol = irBuiltIns.findClass(fqName.shortName(), fqName.parent())!!
