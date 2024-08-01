@@ -151,11 +151,11 @@ class SwiftExportUnitTests {
 
         project.evaluate()
 
-        val embedAndSignTask = project.tasks.getByName("embedSwiftExportForXcode")
+        val embedSwiftExportTask = project.tasks.getByName("embedSwiftExportForXcode")
 
         @Suppress("UNCHECKED_CAST")
-        val targets = embedAndSignTask.inputs.properties["targets"] as List<KonanTarget>
-        val buildType = embedAndSignTask.inputs.properties["type"] as NativeBuildType
+        val targets = embedSwiftExportTask.inputs.properties["targets"] as List<KonanTarget>
+        val buildType = embedSwiftExportTask.inputs.properties["type"] as NativeBuildType
 
         assert(targets.contains(KonanTarget.IOS_SIMULATOR_ARM64)) { "Targets doesn't contain ios_simulator_arm64" }
         assert(targets.contains(KonanTarget.IOS_X64)) { "Targets doesn't contain ios_x64" }
@@ -211,31 +211,39 @@ class SwiftExportUnitTests {
     }
 
     @Test
-    fun `test swift export exported modules`() {
-        val targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) }
-        val project = buildProject(
-            projectBuilder = {
-                withName("shared")
-            },
-            configureProject = {
-                configureRepositoriesForTests()
-            }
-        )
-        val subproject = project.subProject("subproject", targets)
-        project.setupForSwiftExport(targets = targets) {
-            swiftexport {
-                export(subproject)
-                export("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
+    fun `test swift export multiple modules tasks graph`() {
+        val projects = multiModuleSwiftExportProject(subprojects = listOf("subproject", "anotherproject", "miniproject"))
+        projects.forEach { it.evaluate() }
+        val project = projects[0]
+        val subProject1 = projects[1]
+        val subProject2 = projects[2]
+        val subProject3 = projects[3]
 
-                binaries {
-                    linkTaskProvider.configure {
-                        freeCompilerArgs += "-opt-in=some.value"
-                    }
+        val projectCompileTask = project.tasks.getByName("compileKotlinIosSimulatorArm64")
+        val subProject1CompileTask = subProject1.tasks.getByName("compileKotlinIosSimulatorArm64")
+        val subProject2CompileTask = subProject2.tasks.getByName("compileKotlinIosSimulatorArm64")
+        val subProject3CompileTask = subProject3.tasks.getByName("compileKotlinIosSimulatorArm64")
+
+        val projectCompileTaskDependencies = projectCompileTask.taskDependencies.getDependencies(null)
+        assert(projectCompileTaskDependencies.contains(subProject1CompileTask))
+        assert(projectCompileTaskDependencies.contains(subProject2CompileTask))
+        assert(projectCompileTaskDependencies.contains(subProject3CompileTask))
+    }
+
+    @Test
+    fun `test swift export exported modules`() {
+        val projects = multiModuleSwiftExportProject {
+            export("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
+
+            binaries {
+                linkTaskProvider.configure {
+                    freeCompilerArgs += "-opt-in=some.value"
                 }
             }
         }
 
-        listOf(project, subproject).forEach { it.evaluate() }
+        projects.forEach { it.evaluate() }
+        val project = projects.first()
 
         val embedSwiftExportTask = project.tasks.getByName("embedSwiftExportForXcode")
         val buildType = embedSwiftExportTask.inputs.properties["type"] as NativeBuildType
@@ -268,12 +276,37 @@ class SwiftExportUnitTests {
     }
 }
 
+private fun multiModuleSwiftExportProject(
+    mainProjectName: String = "shared",
+    subprojects: List<String> = listOf("subproject"),
+    code: SwiftExportExtension.() -> Unit = {},
+): List<ProjectInternal> {
+    val targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) }
+    val project = buildProject(
+        projectBuilder = {
+            withName(mainProjectName)
+        },
+        configureProject = {
+            configureRepositoriesForTests()
+        }
+    )
+    val projectDependencies = subprojects.map { project.subProject(it, targets) }
+    project.setupForSwiftExport(targets = targets) {
+        swiftexport {
+            projectDependencies.forEach { export(it) }
+            code()
+        }
+    }
+
+    return listOf(project) + projectDependencies
+}
+
 private fun swiftExportProject(
     configuration: String = "DEBUG",
     sdk: String = "iphonesimulator",
     archs: String = "arm64",
     targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) },
-    swiftExport: SwiftExportExtension.() -> Unit = {}
+    swiftExport: SwiftExportExtension.() -> Unit = {},
 ): ProjectInternal = buildProjectWithMPP(
     preApplyCode = {
         applyEmbedAndSignEnvironment(
