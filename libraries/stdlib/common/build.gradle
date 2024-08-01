@@ -62,6 +62,7 @@ compileTestKotlinCommon {
 
 tasks.named("jar", Jar) {
     LibrariesCommon.manifestAttributes(project, manifest, 'Main')
+    getArchiveExtension().set('klib')
 }
 
 RepoArtifacts.sourcesJar(project)
