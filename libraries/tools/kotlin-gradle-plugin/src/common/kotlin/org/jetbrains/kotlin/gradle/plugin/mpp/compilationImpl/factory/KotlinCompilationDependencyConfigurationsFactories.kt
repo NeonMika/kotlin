@@ -6,21 +6,21 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.factory
 
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.attributes.Bundling
 import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.attributes.Usage
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.common
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.isMetadataUsage
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.DefaultKotlinCompilationConfigurationsContainer
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationConfigurationsContainer
-import org.jetbrains.kotlin.gradle.plugin.mpp.configureResourcesPublicationAttributes
-import org.jetbrains.kotlin.gradle.plugin.mpp.javaSourceSets
 import org.jetbrains.kotlin.gradle.plugin.mpp.resources.KotlinTargetResourcesPublicationImpl.Companion.RESOURCES_PATH
 import org.jetbrains.kotlin.gradle.plugin.mpp.resources.resolve.KotlinTargetResourcesResolutionStrategy
 import org.jetbrains.kotlin.gradle.plugin.sources.METADATA_CONFIGURATION_NAME_SUFFIX
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
+import org.jetbrains.kotlin.gradle.targets.metadata.isCompatibilityMetadataVariantEnabled
 import org.jetbrains.kotlin.gradle.utils.*
 
 internal sealed class DefaultKotlinCompilationDependencyConfigurationsFactory :
@@ -172,6 +172,11 @@ private fun KotlinCompilationDependencyConfigurationsContainer(
             usesPlatformOf(target)
             isVisible = false
             attributes.setAttribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
+            if(target.project.kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled
+                && isMetadataUsage(target.platformType, target.project)) {
+                setAttribute(sourceSetsMetadataAttribute, false)
+            }
+
             if (target.platformType != KotlinPlatformType.androidJvm) {
                 attributes.setAttribute(Category.CATEGORY_ATTRIBUTE, target.project.categoryByName(Category.LIBRARY))
             }
@@ -201,6 +206,7 @@ private fun KotlinCompilationDependencyConfigurationsContainer(
                 dest = this
             )
             setAttribute(Usage.USAGE_ATTRIBUTE, target.project.usageByName(KotlinUsages.KOTLIN_METADATA))
+            setAttribute(sourceSetsMetadataAttribute, false)
         } else null
 
     val pluginConfiguration = target.project.configurations.maybeCreateResolvable(pluginConfigurationName).apply {

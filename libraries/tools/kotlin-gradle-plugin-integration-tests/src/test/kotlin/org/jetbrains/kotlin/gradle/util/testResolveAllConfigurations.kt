@@ -16,8 +16,13 @@ private val unresolvedConfigurationRegex = "${Regex.escape(UNRESOLVED_MARKER)}(.
 
 fun TestProject.testResolveAllConfigurations(
     subproject: String? = null,
-    withUnresolvedConfigurationNames: TestProject.(unresolvedConfigurations: List<String>, buildResult: BuildResult) -> Unit = { conf, _ ->
-        assertTrue("Unresolved configurations: $conf") { conf.isEmpty() }
+    withUnresolvedConfigurationNames: TestProject.(unresolvedConfigurations: List<String>, buildResult: BuildResult) -> Unit = { conf, buildResult ->
+        assertTrue(
+            """
+            |${buildResult.failedAssertionOutput()}
+            |Unresolved configurations: $conf
+            """.trimMargin()
+        ) { conf.isEmpty() }
     },
 ) {
     val targetProject = subproject?.let { subProject(it) } ?: this

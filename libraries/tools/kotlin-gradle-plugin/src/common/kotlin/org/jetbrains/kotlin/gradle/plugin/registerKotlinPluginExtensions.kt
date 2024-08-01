@@ -100,6 +100,7 @@ internal fun Project.registerKotlinPluginExtensions() {
 
             if (isKmpProjectIsolationEnabled) {
                 register(project, ProjectStructureMetadataForKMPSetupAction)
+                register(project, MetadataApiElementsSecondaryVariantsSetupAction)
             }
         }
 

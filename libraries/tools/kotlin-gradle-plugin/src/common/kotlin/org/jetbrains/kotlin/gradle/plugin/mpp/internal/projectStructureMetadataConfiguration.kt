@@ -7,13 +7,16 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.internal
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
 import org.gradle.api.file.FileCollection
 import org.jetbrains.kotlin.gradle.dsl.awaitMetadataTarget
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.configureMetadataDependenciesAttribute
 import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
+import org.jetbrains.kotlin.gradle.plugin.mpp.sourceSetsMetadataAttribute
 import org.jetbrains.kotlin.gradle.plugin.sources.InternalKotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.sources.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.metadata.locateOrRegisterGenerateProjectStructureMetadataTask
@@ -53,7 +56,9 @@ internal fun Project.setupProjectStructureMetadataOutgoingArtifacts() {
     project.artifacts.add(
         psmConsumableConfiguration.name,
         generateProjectStructureMetadata.map { task -> task.resultFile }
-    )
+    ) {
+        it.builtBy(generateProjectStructureMetadata)
+    }
 
     project.launch {
         val metadataTarget = project.multiplatformExtension.awaitMetadataTarget()
@@ -92,8 +97,12 @@ private fun maybeCreatePsmConsumableConfiguration(project: Project): Configurati
 }
 
 private fun Configuration.configurePsmResolvableAttributes(project: Project) {
-    attributes.setAttribute(psmAttribute, true)
+    setAttribute(psmAttribute, true)
     this.configureMetadataDependenciesAttribute(project)
+    setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_PSM_METADATA))
+    // metadataApiElements configuration produces multiple secondary variants,
+    // but for the transformation chain we need only the original jar.
+    setAttribute(sourceSetsMetadataAttribute, false)
 }
 
 private val InternalKotlinSourceSet.projectStructureMetadataConfigurationName: String

@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
+import org.jetbrains.kotlin.gradle.tasks.configuration.BaseKotlinCompileConfig.Companion.ARTIFACT_TYPE_ATTRIBUTE
 import org.jetbrains.kotlin.gradle.utils.*
 
 internal val Project.kotlinMppDependencyProjectStructureMetadataExtractorFactory: MppDependenciesProjectStructureMetadataExtractorFactory
@@ -18,17 +19,19 @@ internal data class ProjectPathWithBuildPath(
     val projectPath: String,
     val buildPath: String,
 )
+
 internal interface IMppDependenciesProjectStructureMetadataExtractorFactory {
     fun create(
         metadataArtifact: ResolvedArtifactResult,
         resolvedMetadataConfiguration: LazyResolvedConfiguration?,
     ): MppDependencyProjectStructureMetadataExtractor
 }
+
 internal class MppDependenciesProjectStructureMetadataExtractorFactory
 private constructor(
     private val currentBuild: CurrentBuildIdentifier,
     private val includedBuildsProjectStructureMetadataProviders: Lazy<Map<ProjectPathWithBuildPath, Lazy<KotlinProjectStructureMetadata?>>>,
-): IMppDependenciesProjectStructureMetadataExtractorFactory {
+) : IMppDependenciesProjectStructureMetadataExtractorFactory {
     override fun create(
         metadataArtifact: ResolvedArtifactResult,
         resolvedMetadataConfiguration: LazyResolvedConfiguration?,
@@ -46,17 +49,13 @@ private constructor(
                     projectStructureMetadataFile = projectStructureMetadataFileForCurrentModuleId
                 )
             } else {
-                /*
-                    For MPP projects strarting from 2.0.20 we are consumable/resolvable configurations to get PSM
-                    Such approach prevents project-isolation violations.
-                 */
-                val projectStructureMetadataFileForCurrentModuleId =
-                    getProjectStructureMetadataFileForCurrentModuleId(resolvedMetadataConfiguration, moduleId)
-                if (projectStructureMetadataFileForCurrentModuleId != null) {
-                    IncludedBuildMppDependencyProjectStructureMetadataExtractor(
-                        primaryArtifact = metadataArtifact.file,
-                        projectStructureMetadataProvider = { null },
-                        projectStructureMetadataFile = projectStructureMetadataFileForCurrentModuleId)
+
+                if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
+                    /*
+                    For MPP projects starting from 2.0.20, we have consumable/resolvable configurations to get PSM
+                    Such an approach prevents project-isolation violations.
+                    */
+                    getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(resolvedMetadataConfiguration, moduleId)
                 } else {
                     /*
                     We switched to using 'buildPath' instead of 'buildName' in 1.9.20,
@@ -78,8 +77,24 @@ private constructor(
                 }
             }
         } else {
-            JarMppDependencyProjectStructureMetadataExtractor(metadataArtifact.file)
+            if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
+                // org.jetbrains.kotlin.gradle.HierarchicalMppIT.`test disable default publications`
+                getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(resolvedMetadataConfiguration, moduleId)
+            } else {
+                JarMppDependencyProjectStructureMetadataExtractor(metadataArtifact.file)
+            }
         }
+    }
+
+    private fun getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(
+        resolvedMetadataConfiguration: LazyResolvedConfiguration?,
+        moduleId: ComponentIdentifier,
+    ): ProjectMppDependencyProjectStructureMetadataExtractor {
+        val projectStructureMetadataFileForCurrentModuleId =
+            getProjectStructureMetadataFileForCurrentModuleId(resolvedMetadataConfiguration, moduleId)
+        return ProjectMppDependencyProjectStructureMetadataExtractor(
+            projectStructureMetadataFile = projectStructureMetadataFileForCurrentModuleId
+        )
     }
 
     private fun getProjectStructureMetadataFileForCurrentModuleId(

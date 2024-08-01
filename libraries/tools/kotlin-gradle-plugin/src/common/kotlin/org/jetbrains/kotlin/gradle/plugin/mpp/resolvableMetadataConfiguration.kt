@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.dsl.awaitMetadataTarget
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.hierarchy.orNull
 import org.jetbrains.kotlin.gradle.plugin.sources.*
 import org.jetbrains.kotlin.gradle.utils.*
@@ -99,8 +100,11 @@ internal fun Configuration.configureMetadataDependenciesAttribute(project: Proje
             usesPlatformOf(project.multiplatformExtension.awaitMetadataTarget())
         }
     }
-    attributes.setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
-    attributes.setAttribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+    setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
+    setAttribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+    if (project.kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled) {
+        setAttribute(sourceSetsMetadataAttribute, true)
+    }
 }
 
 /**
@@ -132,6 +136,9 @@ private fun Project.configureConsistentDependencyResolution(groupOfSourceSets: C
     if (groupOfSourceSets.isEmpty()) return
     val configuration = configurations.createResolvable(configurationName)
     configuration.configureMetadataDependenciesAttribute(project)
+    if (kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled) {
+        configuration.setAttribute(sourceSetsMetadataAttribute, false)
+    }
     val allVisibleSourceSets = groupOfSourceSets + groupOfSourceSets.flatMap { getVisibleSourceSetsFromAssociateCompilations(it) }
     val extenders = allVisibleSourceSets.flatMap { it.internal.compileDependenciesConfigurations }
     configuration.extendsFrom(*extenders.toTypedArray())

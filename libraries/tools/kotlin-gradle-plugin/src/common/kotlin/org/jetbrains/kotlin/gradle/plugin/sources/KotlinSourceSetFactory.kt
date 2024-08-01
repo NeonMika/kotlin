@@ -11,8 +11,10 @@ import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.plugin.mpp.sourceSetsMetadataAttribute
 import org.jetbrains.kotlin.gradle.plugin.usageByName
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 import org.jetbrains.kotlin.gradle.utils.maybeCreateDependencyScope
@@ -21,7 +23,7 @@ import org.jetbrains.kotlin.gradle.utils.setAttribute
 import java.io.File
 
 internal abstract class KotlinSourceSetFactory<T : KotlinSourceSet> internal constructor(
-    protected val project: Project
+    protected val project: Project,
 ) : NamedDomainObjectFactory<KotlinSourceSet> {
 
     abstract val itemClass: Class<T>
@@ -73,7 +75,7 @@ internal abstract class KotlinSourceSetFactory<T : KotlinSourceSet> internal con
 
 
 internal class DefaultKotlinSourceSetFactory(
-    project: Project
+    project: Project,
 ) : KotlinSourceSetFactory<DefaultKotlinSourceSet>(project) {
 
     override val itemClass: Class<DefaultKotlinSourceSet>
@@ -105,7 +107,12 @@ internal class DefaultKotlinSourceSetFactory(
                 }
 
                 if (project.isKotlinGranularMetadataEnabled) {
-                    attributes.setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
+                    setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
+                    if (project.kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled) {
+                        // We want to resolve the main variant,
+                        // not the secondary variant of metadata api configuration, which contains `json` artifact
+                        setAttribute(sourceSetsMetadataAttribute, false)
+                    }
                 }
             }
         }
