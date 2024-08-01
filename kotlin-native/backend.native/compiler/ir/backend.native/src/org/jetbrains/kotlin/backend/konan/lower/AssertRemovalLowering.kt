@@ -14,7 +14,9 @@ internal class NativeAssertionWrapperLowering(context: Context) : KlibAssertionW
     override val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol = context.ir.symbols.isAssertionArgumentEvaluationEnabled
 }
 
-internal class NativeAssertionRemoverLowering(context: Context) : KlibAssertionRemoverLowering(context, context.config.assertsEnabled) {
-    override val isAssertionThrowingExceptionEnabled: IrSimpleFunctionSymbol = context.ir.symbols.isAssertionThrowingExceptionEnabled
+internal class NativeAssertionRemoverLowering(context: Context) : KlibAssertionRemoverLowering(
+        context, context.config.assertsEnabled, context.config.assertsEnabled
+) {
+    override val isAssertionThrowingErrorEnabled: IrSimpleFunctionSymbol = context.ir.symbols.isAssertionThrowingErrorEnabled
     override val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol = context.ir.symbols.isAssertionArgumentEvaluationEnabled
 }

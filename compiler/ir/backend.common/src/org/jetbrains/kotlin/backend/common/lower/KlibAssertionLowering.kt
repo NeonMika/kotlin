@@ -66,24 +66,23 @@ abstract class KlibAssertionWrapperLowering(val context: CommonBackendContext) :
 }
 
 /**
- * This lowering replaces `isAssertionThrowingExceptionEnabled` and `isAssertionArgumentEvaluationEnabled` intrinsics with actual value,
+ * This lowering replaces `isAssertionThrowingExceptionEnabled` and `isAssertionArgumentErrorEnabled` intrinsics with actual value,
  * depending on the assertion mode.
  */
-abstract class KlibAssertionRemoverLowering(val context: CommonBackendContext, val assertionsEnabled: Boolean) : FileLoweringPass {
-    protected abstract val isAssertionThrowingExceptionEnabled: IrSimpleFunctionSymbol
+abstract class KlibAssertionRemoverLowering(
+    val context: CommonBackendContext, val throwingErrorEnabled: Boolean, val argumentEvaluationEnabled: Boolean
+) : FileLoweringPass {
+    protected abstract val isAssertionThrowingErrorEnabled: IrSimpleFunctionSymbol
     protected abstract val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol
-
-    private fun IrCall.isCallForAssertIntrinsic(): Boolean {
-        return symbol != isAssertionThrowingExceptionEnabled && symbol != isAssertionArgumentEvaluationEnabled
-    }
 
     override fun lower(irFile: IrFile) {
         irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitWhen(expression: IrWhen): IrExpression {
-                if (assertionsEnabled || expression.branches.size != 1) return super.visitWhen(expression)
+                if (argumentEvaluationEnabled || expression.branches.size != 1) return super.visitWhen(expression)
                 val condition = expression.branches.first().condition
 
-                if (condition is IrCall && condition.isCallForAssertIntrinsic()) {
+                // argumentEvaluationEnable == false
+                if (condition is IrCall && condition.symbol == isAssertionArgumentEvaluationEnabled) {
                     return IrCompositeImpl(expression.startOffset, expression.endOffset, expression.type)
                 }
 
@@ -91,11 +90,15 @@ abstract class KlibAssertionRemoverLowering(val context: CommonBackendContext, v
             }
 
             override fun visitCall(expression: IrCall): IrExpression {
-                if (expression.isCallForAssertIntrinsic()) {
-                    return super.visitCall(expression)
+                if (expression.symbol == isAssertionArgumentEvaluationEnabled) {
+                    return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, argumentEvaluationEnabled)
                 }
 
-                return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, assertionsEnabled)
+                if (expression.symbol == isAssertionThrowingErrorEnabled) {
+                    return IrConstImpl.boolean(expression.startOffset, expression.endOffset, expression.type, throwingErrorEnabled)
+                }
+
+                return super.visitCall(expression)
             }
         })
     }
