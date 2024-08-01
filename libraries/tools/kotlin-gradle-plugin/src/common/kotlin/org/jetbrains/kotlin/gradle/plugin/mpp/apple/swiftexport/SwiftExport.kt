@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.AppleTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.appleTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.configuration
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.maybeCreateSwiftExportClasspathResolvableConfiguration
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.swiftExportedModules
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.BuildSPMSwiftExportPackage
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.GenerateSPMPackageFromSwiftExport
@@ -140,9 +141,12 @@ private fun Project.registerSwiftExportRun(
         // Input
         task.swiftExportClasspath.from(maybeCreateSwiftExportClasspathResolvableConfiguration())
         task.parameters.bridgeModuleName.set("SharedBridge")
+        task.parameters.swiftModules.set(
+            configurationProvider.zip(exportedModules) { configuration, modules ->
+                configuration.swiftExportedModules(modules)
+            }
+        )
 
-        task.configuration.set(configurationProvider)
-        task.exportedModules.set(exportedModules)
         task.mainModuleInput.moduleName.set(swiftApiModuleName)
         task.mainModuleInput.flattenPackage.set(swiftApiFlattenPackage)
         task.kotlinNativeProvider.set(

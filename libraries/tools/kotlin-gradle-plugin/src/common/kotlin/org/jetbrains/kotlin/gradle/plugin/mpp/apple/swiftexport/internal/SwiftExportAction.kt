@@ -20,7 +20,6 @@ import java.util.logging.Logger
 
 internal abstract class SwiftExportAction : WorkAction<SwiftExportAction.SwiftExportWorkParameters> {
     internal interface SwiftExportWorkParameters : SwiftExportTaskParameters, WorkParameters {
-        val swiftModules: ListProperty<SwiftExportedModule>
         val konanDistribution: Property<Distribution>
     }
 

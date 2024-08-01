@@ -113,7 +113,7 @@ abstract class SwiftExportExtension @Inject constructor(
     /**
      * Returns a list of exported modules.
      */
-    val exportedModules: Provider<Set<SwiftExportedModuleVersionMetadata>> = providerFactory.provider {
+    internal val exportedModules: Provider<Set<SwiftExportedModuleVersionMetadata>> = providerFactory.provider {
         _exportedModules
     }
 

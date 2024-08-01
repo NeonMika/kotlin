@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal
 
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 
@@ -22,6 +23,9 @@ internal interface SwiftExportTaskParameters {
     @get:Input
     @get:Optional
     val renderDocComments: Property<Boolean>
+
+    @get:Input
+    val swiftModules: ListProperty<SwiftExportedModule>
 
     @get:OutputDirectory
     val outputPath: DirectoryProperty
