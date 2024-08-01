@@ -49,8 +49,8 @@ private interface KotlinTargetComponentWithCoordinatesAndPublication :
 }
 
 open class KotlinVariant(
-    private val producingCompilation: KotlinCompilation<*>,
-    private val usages: Set<DefaultKotlinUsageContext>,
+    val producingCompilation: KotlinCompilation<*>,
+    private val usages: Set<DefaultKotlinUsageContext>
 ) : InternalKotlinTargetComponent(), KotlinTargetComponentWithPublication {
     var componentName: String? = null
 
