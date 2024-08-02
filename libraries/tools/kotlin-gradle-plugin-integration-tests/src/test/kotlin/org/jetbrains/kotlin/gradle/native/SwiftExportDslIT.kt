@@ -169,10 +169,16 @@ class SwiftExportDslIT : KGPBaseTest() {
                 )
             ) {
                 val sharedSwiftPath = projectPath.resolve("shared/build/SwiftExport/iosArm64/Debug/files/Shared/Shared.swift")
-                assert(sharedSwiftPath.readText().contains("public extension ExportedKotlinPackages.com.github.jetbrains.swiftexport"))
+                assert(
+                    sharedSwiftPath.readText()
+                        .contains("public typealias MyKotlinClass = ExportedKotlinPackages.com.github.jetbrains.swiftexport.MyKotlinClass")
+                )
 
                 val subprojectSwiftPath = projectPath.resolve("shared/build/SwiftExport/iosArm64/Debug/files/Subproject/Subproject.swift")
-                assert(subprojectSwiftPath.readText().contains("public extension ExportedKotlinPackages.com.subproject.library"))
+                assert(
+                    subprojectSwiftPath.readText()
+                        .contains("public typealias LibFoo = ExportedKotlinPackages.com.subproject.library.LibFoo")
+                )
             }
         }
     }
