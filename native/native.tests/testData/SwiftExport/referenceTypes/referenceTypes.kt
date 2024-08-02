@@ -108,6 +108,15 @@ fun isEqual(lhs: Any, rhs: Any): Boolean = lhs == rhs
 
 open class Base
 
+open class Derived : Base()
+
+var polymorphicObject: Base = Derived()
+
+fun identity(obj: Base): Base = obj
+
+fun getDerived(): Base = Base()
+fun getBase(): Base = Derived()
+
 // FILE: dependency_usage.kt
 import dependency.*
 

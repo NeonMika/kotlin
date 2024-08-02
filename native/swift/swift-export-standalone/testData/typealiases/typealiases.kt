@@ -52,17 +52,8 @@ interface OUTSIDE_PROTO {
 typealias outerInterface = OUTSIDE_PROTO
 typealias innerInterface = OUTSIDE_PROTO.INSIDE_PROTO
 
-class INHERITANCE_COUPLE : OUTSIDE_PROTO.INSIDE_PROTO(), OUTSIDE_PROTO
-typealias inheritanceCouple = INHERITANCE_COUPLE
-
-class INHERITANCE_SINGLE_PROTO : OUTSIDE_PROTO.INSIDE_PROTO()
-typealias inhertanceSingleProto = INHERITANCE_SINGLE_PROTO
-
 open class OPEN_CLASS
 typealias openClass = OPEN_CLASS
-
-class INHERITANCE_SINGLE_CLASS : OPEN_CLASS()
-typealias inheritanceSingleClass = INHERITANCE_SINGLE_CLASS
 
 data class DATA_CLASS(val a: Int)
 typealias dataClass = DATA_CLASS
@@ -83,9 +74,6 @@ sealed class SEALED {
     object O : SEALED()
 }
 typealias sealedClass = SEALED
-
-object OBJECT_WITH_CLASS_INHERITANCE: OPEN_CLASS()
-typealias objectWithClassInheritance = OBJECT_WITH_CLASS_INHERITANCE
 
 object OBJECT_WITH_INTERFACE_INHERITANCE: OUTSIDE_PROTO
 typealias objectWithInterfaceInheritance = OBJECT_WITH_INTERFACE_INHERITANCE
