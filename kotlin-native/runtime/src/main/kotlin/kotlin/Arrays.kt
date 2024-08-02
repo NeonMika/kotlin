@@ -9,10 +9,11 @@
 package kotlin
 
 import kotlin.native.internal.ExportTypeInfo
-import kotlin.native.internal.IntrinsicType
 import kotlin.native.internal.GCUnsafeCall
+import kotlin.native.internal.IntrinsicType
 import kotlin.native.internal.TypedIntrinsic
-import kotlin.native.internal.PointsTo
+import kotlin.native.internal.escapeAnalysis.Escapes
+import kotlin.native.internal.escapeAnalysis.PointsTo
 
 /**
  * An array of bytes.
@@ -53,6 +54,7 @@ public final class ByteArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_ByteArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Byte
 
     /**
@@ -61,9 +63,11 @@ public final class ByteArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_ByteArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Byte): Unit
 
     @GCUnsafeCall("Kotlin_ByteArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -124,6 +128,7 @@ public final class CharArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_CharArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Char
 
     /**
@@ -132,9 +137,11 @@ public final class CharArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_CharArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Char): Unit
 
     @GCUnsafeCall("Kotlin_CharArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -195,6 +202,7 @@ public final class ShortArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_ShortArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Short
 
     /**
@@ -203,9 +211,11 @@ public final class ShortArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_ShortArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Short): Unit
 
     @GCUnsafeCall("Kotlin_ShortArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -266,6 +276,7 @@ public final class IntArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_IntArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Int
 
     /**
@@ -274,9 +285,11 @@ public final class IntArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_IntArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Int): Unit
 
     @GCUnsafeCall("Kotlin_IntArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -337,6 +350,7 @@ public final class LongArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_LongArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Long
 
     /**
@@ -345,9 +359,11 @@ public final class LongArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_LongArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Long): Unit
 
     @GCUnsafeCall("Kotlin_LongArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -408,6 +424,7 @@ public final class FloatArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_FloatArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Float
 
     /**
@@ -416,9 +433,11 @@ public final class FloatArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_FloatArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Float): Unit
 
     @GCUnsafeCall("Kotlin_FloatArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -479,6 +498,7 @@ public final class DoubleArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_DoubleArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Double
 
     /**
@@ -487,9 +507,11 @@ public final class DoubleArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_DoubleArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Double): Unit
 
     @GCUnsafeCall("Kotlin_DoubleArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */
@@ -550,6 +572,7 @@ public final class BooleanArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_BooleanArray_get")
+    @Escapes.Nothing
     public external operator fun get(index: Int): Boolean
 
     /**
@@ -558,9 +581,11 @@ public final class BooleanArray {
      * If the [index] is out of bounds of this array, throws an [IndexOutOfBoundsException].
      */
     @GCUnsafeCall("Kotlin_BooleanArray_set")
+    @Escapes.Nothing
     public external operator fun set(index: Int, value: Boolean): Unit
 
     @GCUnsafeCall("Kotlin_BooleanArray_getArrayLength")
+    @Escapes.Nothing
     private external fun getArrayLength(): Int
 
     /** Creates an iterator over the elements of the array. */

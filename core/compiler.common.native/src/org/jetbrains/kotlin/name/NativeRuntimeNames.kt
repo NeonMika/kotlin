@@ -22,5 +22,8 @@ object NativeRuntimeNames {
         val SharedImmutableAlias = ClassId(kotlinNativePackage, Name.identifier("SharedImmutable"))
         val ThreadLocal = ClassId(kotlinNativePackage.child(Name.identifier("concurrent")), Name.identifier("ThreadLocal"))
         val ThreadLocalAlias = ClassId(kotlinNativePackage, Name.identifier("ThreadLocal"))
+        val PointsTo = ClassId(kotlinNativeInternalPackage.child(Name.identifier("escapeAnalysis")), Name.identifier("PointsTo"))
+        val Escapes = ClassId(kotlinNativeInternalPackage.child(Name.identifier("escapeAnalysis")), Name.identifier("Escapes"))
+        val EscapesNothing = Escapes.createNestedClassId(Name.identifier("Nothing"))
     }
 }

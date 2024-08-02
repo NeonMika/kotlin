@@ -30,8 +30,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.library.metadata.impl.KlibResolvedModuleDescriptorsFactoryImpl.Companion.FORWARD_DECLARATIONS_MODULE_NAME
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.NativeRuntimeNames
 
 internal object DataFlowIR {
     abstract class Type(
@@ -424,14 +423,6 @@ internal object DataFlowIR {
         val functionMap = mutableMapOf<IrDeclaration, FunctionSymbol>()
         val fieldMap = mutableMapOf<IrField, Field>()
 
-        private val NAME_ESCAPES = Name.identifier("Escapes")
-        private val NAME_POINTS_TO = Name.identifier("PointsTo")
-        private val FQ_NAME_KONAN = FqName.fromSegments(listOf("kotlin", "native", "internal"))
-
-        private val FQ_NAME_ESCAPES = FQ_NAME_KONAN.child(NAME_ESCAPES)
-        private val FQ_NAME_POINTS_TO = FQ_NAME_KONAN.child(NAME_POINTS_TO)
-
-        private val konanPackage = context.builtIns.builtInsModule.getPackage(FQ_NAME_KONAN).memberScope
         private val getContinuationSymbol = context.ir.symbols.getContinuation
         private val continuationType = getContinuationSymbol.owner.returnType
 
@@ -599,10 +590,11 @@ internal object DataFlowIR {
             }
             val symbol = when {
                 it.isExternal || it.isBuiltInOperator -> {
-                    val escapesAnnotation = it.annotations.findAnnotation(FQ_NAME_ESCAPES)
-                    val pointsToAnnotation = it.annotations.findAnnotation(FQ_NAME_POINTS_TO)
+                    val escapesAnnotation = it.annotations.findAnnotation(NativeRuntimeNames.Annotations.Escapes.asSingleFqName())
+                    val escapesNothingAnnotation = it.annotations.findAnnotation(NativeRuntimeNames.Annotations.EscapesNothing.asSingleFqName())
+                    val pointsToAnnotation = it.annotations.findAnnotation(NativeRuntimeNames.Annotations.PointsTo.asSingleFqName())
                     @Suppress("UNCHECKED_CAST")
-                    val escapesBitMask = (escapesAnnotation?.getValueArgument(0) as? IrConst<Int>)?.value
+                    val escapesBitMask = (escapesAnnotation?.getValueArgument(0) as? IrConst<Int>)?.value ?: escapesNothingAnnotation?.let { 0 }
                     @Suppress("UNCHECKED_CAST")
                     val pointsToBitMask = (pointsToAnnotation?.getValueArgument(0) as? IrVararg)?.elements?.map { (it as IrConst<Int>).value }
                     FunctionSymbol.External(localHash(name.toByteArray()), attributes, it, takeName { name }, it.isExported()).apply {

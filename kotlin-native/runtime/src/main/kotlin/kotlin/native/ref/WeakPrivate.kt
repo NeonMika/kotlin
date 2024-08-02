@@ -7,6 +7,7 @@ package kotlin.native.ref
 
 import kotlinx.cinterop.*
 import kotlin.native.internal.*
+import kotlin.native.internal.escapeAnalysis.Escapes
 
 /**
  *   Theory of operations:
@@ -41,6 +42,7 @@ internal class RegularWeakReferenceImpl(
     val referred: COpaquePointer, // TODO: This exists only for the ExtraObjectData's sake. Refactor and remove.
 ) : WeakReferenceImpl() {
     @GCUnsafeCall("Konan_RegularWeakReferenceImpl_get")
+    @Escapes.Nothing
     external override fun get(): Any?
 }
 

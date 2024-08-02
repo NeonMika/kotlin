@@ -5,11 +5,13 @@
 
 package kotlin.io
 
+import kotlin.native.internal.escapeAnalysis.Escapes
 import kotlin.native.internal.GCUnsafeCall
 
 /** Prints the given [message] to the standard output stream. */
 @GCUnsafeCall("Kotlin_io_Console_print")
 @PublishedApi
+@Escapes.Nothing
 internal external fun print(message: String)
 
 /** Prints the given [message] to the standard output stream. */
@@ -20,10 +22,12 @@ public actual fun print(message: Any?) {
 /** Prints the given [message] and the line separator to the standard output stream. */
 @GCUnsafeCall("Kotlin_io_Console_println")
 @PublishedApi
+@Escapes.Nothing
 internal external fun println(message: String)
 
 /** Prints the given [message] and the line separator to the standard error output stream. */
 @GCUnsafeCall("Kotlin_io_Console_printlnToStdErr")
+@Escapes.Nothing
 internal external fun printlnToStdErr(message: String)
 
 /** Prints the given [message] and the line separator to the standard output stream. */

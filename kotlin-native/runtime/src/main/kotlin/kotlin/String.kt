@@ -9,6 +9,7 @@ import kotlin.native.internal.ExportTypeInfo
 import kotlin.native.internal.GCUnsafeCall
 import kotlin.native.internal.IntrinsicType
 import kotlin.native.internal.TypedIntrinsic
+import kotlin.native.internal.escapeAnalysis.Escapes
 
 @ExportTypeInfo("theStringTypeInfo")
 public final class String : Comparable<String>, CharSequence {
@@ -16,6 +17,7 @@ public final class String : Comparable<String>, CharSequence {
     }
 
     @GCUnsafeCall("Kotlin_String_hashCode")
+    @Escapes.Nothing
     external public override fun hashCode(): Int
 
     @kotlin.internal.IntrinsicConstEvaluation
@@ -40,24 +42,30 @@ public final class String : Comparable<String>, CharSequence {
      */
     @GCUnsafeCall("Kotlin_String_get")
     @kotlin.internal.IntrinsicConstEvaluation
+    @Escapes.Nothing
     public external override fun get(index: Int): Char
 
     @GCUnsafeCall("Kotlin_String_subSequence")
+    @Escapes.Nothing
     public external override fun subSequence(startIndex: Int, endIndex: Int): CharSequence
 
     @GCUnsafeCall("Kotlin_String_compareTo")
     @kotlin.internal.IntrinsicConstEvaluation
+    @Escapes.Nothing
     public external override fun compareTo(other: String): Int
 
     @GCUnsafeCall("Kotlin_String_getStringLength")
+    @Escapes.Nothing
     private external fun getStringLength(): Int
 
     @PublishedApi
     @GCUnsafeCall("Kotlin_String_plusImpl")
+    @Escapes.Nothing
     internal external fun plusImpl(other: String): String
 
     @GCUnsafeCall("Kotlin_String_equals")
     @kotlin.internal.IntrinsicConstEvaluation
+    @Escapes.Nothing
     external override fun equals(other: Any?): Boolean
 }
 

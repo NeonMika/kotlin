@@ -11,6 +11,7 @@ import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.internal.ExportTypeInfo
 import kotlin.native.internal.GCUnsafeCall
 import kotlin.native.internal.NativePtrArray
+import kotlin.native.internal.escapeAnalysis.Escapes
 import kotlinx.cinterop.ExperimentalForeignApi
 
 /**
@@ -149,6 +150,7 @@ public open class Throwable(public open val message: String?, public open val ca
 private external fun getCurrentStackTrace(): NativePtrArray
 
 @GCUnsafeCall("Kotlin_getStackTraceStrings")
+@Escapes.Nothing
 private external fun getStackTraceStrings(stackTrace: NativePtrArray): Array<String>
 
 /**

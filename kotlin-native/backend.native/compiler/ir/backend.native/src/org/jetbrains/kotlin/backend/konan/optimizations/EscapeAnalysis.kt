@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.DirectedGraphCondensationBuilder
 import org.jetbrains.kotlin.backend.konan.DirectedGraphMultiNode
+import org.jetbrains.kotlin.backend.konan.ir.isBuiltInOperator
 import org.jetbrains.kotlin.backend.konan.llvm.Lifetime
 import org.jetbrains.kotlin.backend.konan.logMultiple
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -699,6 +700,13 @@ internal object EscapeAnalysis {
                         && !callee.name.startsWith("kfun:kotlin.native.concurrent")
                         && !callee.name.startsWith("kfun:kotlin.concurrent")) {
                     context.log { "A function from K/N runtime - can use annotations" }
+                    if (callee.irFunction?.isBuiltInOperator == false) { // If callee is a function, but not a builtin operator
+                        if (callee.escapes == null && callee.pointsTo == null) { // and it had no EA annotations
+                            require(callee.parameters.all { it.type.irClass == null }) { // all of its parameters must be primitive types
+                                "Function ${callee.name} has reference parameters and is missing EA annotations. Must have been handled by SpecialBackendChecksTraversal"
+                            }
+                        }
+                    }
                     FunctionEscapeAnalysisResult.fromBits(
                             callee.escapes ?: 0,
                             (0..callee.parameters.size).map { callee.pointsTo?.elementAtOrNull(it) ?: 0 }

@@ -9,8 +9,7 @@ import org.jetbrains.kotlin.backend.common.*
 import org.jetbrains.kotlin.backend.common.ir.Symbols
 import org.jetbrains.kotlin.backend.common.lower.Closure
 import org.jetbrains.kotlin.backend.common.lower.ClosureAnnotator
-import org.jetbrains.kotlin.backend.konan.InteropFqNames
-import org.jetbrains.kotlin.backend.konan.RuntimeNames
+import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.cgen.*
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.ir.KonanSymbols
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.backend.konan.ir.getSuperClassNotAny
 import org.jetbrains.kotlin.backend.konan.llvm.IntrinsicType
 import org.jetbrains.kotlin.backend.konan.llvm.tryGetIntrinsicType
 import org.jetbrains.kotlin.backend.konan.reportCompilationError
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.isClass
@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.NativeRuntimeNames
 import org.jetbrains.kotlin.name.NativeStandardInteropNames.objCActionClassId
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.fileUtils.descendantRelativeTo
@@ -62,6 +64,14 @@ private class BackendChecker(
 
     fun reportError(location: IrElement, message: String): Nothing =
             context.reportCompilationError(message, irFile, location)
+
+    fun reportWarning(location: IrElement, message: String) {
+        context.report(CompilerMessageSeverity.STRONG_WARNING, location, irFile, message)
+    }
+
+    fun reportNonFatalError(location: IrElement, message: String) {
+        context.report(CompilerMessageSeverity.ERROR, location, irFile, message)
+    }
 
     private val outerDeclarations = mutableListOf<IrDeclaration>()
 
@@ -603,6 +613,56 @@ private class BackendChecker(
         }
         super.visitClass(declaration)
 
+    }
+
+    private fun checkEscapeAnalysisAnnotations(declaration: IrFunction) {
+        val isSupportedDeclaration = declaration.isExternal && declaration.parent.fqNameForIrSerialization.let {
+            // Mimics exclusion from EscapeAnalysis.kt
+            it.startsWith(kotlinPackageFqn)
+                    && !it.startsWith(kotlinPackageFqn.child(Name.identifier("concurrent")))
+                    && !it.startsWith(kotlinPackageFqn.child(Name.identifier("native")).child(Name.identifier("concurrent")))
+        }
+        val hasEscapes = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.Escapes)
+        val escapesName = NativeRuntimeNames.Annotations.Escapes.asFqNameString()
+        val hasEscapesNothing = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.EscapesNothing)
+        val escapesNothingName = NativeRuntimeNames.Annotations.EscapesNothing.asFqNameString()
+        val hasPointsTo = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.PointsTo)
+        val pointsToName = NativeRuntimeNames.Annotations.PointsTo.asFqNameString()
+        if (!isSupportedDeclaration) {
+            if (hasEscapes) {
+                reportWarning(declaration, "Unneeded @$escapesName on a non-runtime function")
+            }
+            if (hasEscapesNothing) {
+                reportWarning(declaration, "Unneeded @$escapesNothingName on a non-runtime function")
+            }
+            if (hasPointsTo) {
+                reportWarning(declaration, "Unneeded @$pointsToName on a non-runtime function")
+            }
+            return
+        }
+        if (declaration.allParameters.all { it.type.computeBinaryType() is BinaryType.Primitive }) {
+            if (hasEscapes) {
+                reportWarning(declaration, "Unneeded @$escapesName on a function without reference parameters")
+            }
+            if (hasEscapesNothing) {
+                reportWarning(declaration, "Unneeded @$escapesNothingName on a function without reference parameters")
+            }
+            if (hasPointsTo && declaration.returnType.computeBinaryType() is BinaryType.Primitive) {
+                reportWarning(declaration, "Unneeded @$pointsToName on a function without reference parameters or reference return value")
+            }
+            return
+        }
+        if (hasEscapes && hasEscapesNothing) {
+            reportNonFatalError(declaration, "Conflicting @$escapesName and @$escapesNothingName")
+        }
+        if (!hasEscapes && !hasEscapesNothing && !hasPointsTo) {
+            reportNonFatalError(declaration, "External function with reference parameters requires @$escapesName or @$escapesNothingName or @$pointsToName")
+        }
+    }
+
+    override fun visitFunction(declaration: IrFunction) {
+        checkEscapeAnalysisAnnotations(declaration)
+        super.visitFunction(declaration)
     }
 }
 

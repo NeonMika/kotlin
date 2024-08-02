@@ -8,8 +8,7 @@
 package kotlin.native.internal.ref
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.internal.Escapes
+import kotlin.native.internal.escapeAnalysis.Escapes
 import kotlin.native.internal.GCUnsafeCall
 import kotlin.native.internal.InternalForKotlinNative
 import kotlin.native.internal.NativePtr

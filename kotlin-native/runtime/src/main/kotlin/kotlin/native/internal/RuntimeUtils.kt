@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
 import kotlin.concurrent.AtomicReference
 import kotlinx.cinterop.*
 import kotlinx.cinterop.NativePtr
+import kotlin.native.internal.escapeAnalysis.Escapes
 
 @ExportForCppRuntime
 @PublishedApi
@@ -212,6 +213,7 @@ public external fun <T> createUninitializedInstance(): T
 
 @TypedIntrinsic(IntrinsicType.INIT_INSTANCE)
 @InternalForKotlinNative
+@Escapes.Nothing
 public external fun initInstance(thiz: Any, constructorCall: Any): Unit
 
 @PublishedApi
@@ -261,4 +263,5 @@ internal fun KonanObjectToUtf8Array(value: Any?): ByteArray {
 
 @PublishedApi
 @TypedIntrinsic(IntrinsicType.IMMUTABLE_BLOB)
+@Escapes.Nothing
 internal external fun immutableBlobOfImpl(data: String): ImmutableBlob

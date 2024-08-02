@@ -8,7 +8,8 @@ package kotlin
 import kotlin.native.internal.ExportForCompiler
 import kotlin.native.internal.ExportTypeInfo
 import kotlin.native.internal.GCUnsafeCall
-import kotlin.native.internal.PointsTo
+import kotlin.native.internal.escapeAnalysis.Escapes
+import kotlin.native.internal.escapeAnalysis.PointsTo
 
 /**
  * Represents an array. Array instances can be created using the constructor, [arrayOf], [arrayOfNulls] and [emptyArray]
@@ -81,6 +82,7 @@ public final class Array<T> {
     }
 
     @GCUnsafeCall("Kotlin_Array_getArrayLength")
+    @Escapes.Nothing
     external private fun getArrayLength(): Int
 }
 

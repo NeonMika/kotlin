@@ -5,6 +5,7 @@
 
 package kotlin.text.regex
 
+import kotlin.native.internal.escapeAnalysis.Escapes
 import kotlin.native.internal.GCUnsafeCall
 
 // Access to the decomposition tables. =========================================================================
@@ -25,6 +26,7 @@ internal external fun getDecompositionInternal(ch: Int): IntArray?
  * Returns the length of the decomposition.
  */
 @GCUnsafeCall("Kotlin_text_regex_decomposeString")
+@Escapes.Nothing
 internal actual external fun decomposeString(inputCodePoints: IntArray, inputLength: Int, outputCodePoints: IntArray): Int
 
 /**
@@ -32,5 +34,6 @@ internal actual external fun decomposeString(inputCodePoints: IntArray, inputLen
  * Returns the length of the decomposition.
  */
 @GCUnsafeCall("Kotlin_text_regex_decomposeCodePoint")
+@Escapes.Nothing
 internal actual external fun decomposeCodePoint(codePoint: Int, outputCodePoints: IntArray, fromIndex: Int): Int
 // =============================================================================================================

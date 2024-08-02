@@ -8,6 +8,7 @@ package kotlin.native.internal
 
 import kotlin.reflect.KClass
 import kotlinx.cinterop.*
+import kotlin.native.internal.escapeAnalysis.Escapes
 
 @ExportForCppRuntime
 internal fun DescribeObjectForDebugging(typeInfo: NativePtr, address: NativePtr): String {
@@ -23,8 +24,11 @@ internal fun debugDescription(kClass: KClass<*>, identity: Int): String {
 }
 
 @GCUnsafeCall("Kotlin_internal_reflect_getObjectReferenceFieldsCount")
+@Escapes.Nothing
 private external fun getObjectReferenceFieldsCount(o: Any): Int
+
 @GCUnsafeCall("Kotlin_internal_reflect_getObjectReferenceFieldByIndex")
+@Escapes.Nothing
 private external fun getObjectReferenceFieldByIndex(o: Any, index: Int): Any?
 
 /**
