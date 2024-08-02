@@ -21059,6 +21059,22 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/inference/reified")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Reified {
+        @Test
+        public void testAllFilesPresentInReified() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/reified"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true, "multiplatform");
+        }
+
+        @Test
+        @TestMetadata("ReifiedIntersection.kt")
+        public void testReifiedIntersection() {
+          runTest("compiler/testData/diagnostics/tests/inference/reified/ReifiedIntersection.kt");
+        }
+      }
+
+      @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/inference/reportingImprovements")
       @TestDataPath("$PROJECT_ROOT")
       public class ReportingImprovements {

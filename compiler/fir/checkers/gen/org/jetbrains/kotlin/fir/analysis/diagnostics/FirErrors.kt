@@ -489,6 +489,7 @@ object FirErrors {
     val TYPE_PARAMETER_AS_REIFIED_ARRAY: KtDiagnosticFactoryForDeprecation1<FirTypeParameterSymbol> = KtDiagnosticFactoryForDeprecation1("TYPE_PARAMETER_AS_REIFIED_ARRAY", ProhibitNonReifiedArraysAsReifiedTypeArguments, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val REIFIED_TYPE_FORBIDDEN_SUBSTITUTION: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("REIFIED_TYPE_FORBIDDEN_SUBSTITUTION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val DEFINITELY_NON_NULLABLE_AS_REIFIED: KtDiagnosticFactory0 = KtDiagnosticFactory0("DEFINITELY_NON_NULLABLE_AS_REIFIED", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val TYPE_INTERSECTION_AS_REIFIED: KtDiagnosticFactory2<FirTypeParameterSymbol, Collection<ConeKotlinType>> = KtDiagnosticFactory2("TYPE_INTERSECTION_AS_REIFIED", WARNING, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val FINAL_UPPER_BOUND: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("FINAL_UPPER_BOUND", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val BOUNDS_NOT_ALLOWED_IF_BOUNDED_BY_TYPE_PARAMETER: KtDiagnosticFactory0 = KtDiagnosticFactory0("BOUNDS_NOT_ALLOWED_IF_BOUNDED_BY_TYPE_PARAMETER", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)

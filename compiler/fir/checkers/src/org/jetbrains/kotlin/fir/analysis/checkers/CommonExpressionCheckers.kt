@@ -47,6 +47,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirUninitializedEnumChecker,
             FirFunInterfaceConstructorReferenceChecker,
             FirReifiedChecker,
+            FirIntersectionReifiedTypeChecker,
             FirSuspendCallChecker,
             FirLateinitIntrinsicApplicabilityChecker,
             FirAbstractClassInstantiationChecker,

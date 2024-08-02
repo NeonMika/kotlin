@@ -1765,6 +1765,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = DefinitelyNonNullableAsReified::class
     }
 
+    interface TypeIntersectionAsReified : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = TypeIntersectionAsReified::class
+        val typeParameter: KaTypeParameterSymbol
+        val types: List<KaType>
+    }
+
     interface FinalUpperBound : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = FinalUpperBound::class
         val type: KaType
