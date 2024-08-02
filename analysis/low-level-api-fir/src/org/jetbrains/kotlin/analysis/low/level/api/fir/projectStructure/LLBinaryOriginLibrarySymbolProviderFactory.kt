@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.session.KlibBasedSymbolProvider
 import org.jetbrains.kotlin.fir.session.MetadataSymbolProvider
 import org.jetbrains.kotlin.fir.session.NativeForwardDeclarationsSymbolProvider
 import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.library.JAR_FILE_EXTENSION
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
@@ -138,7 +139,7 @@ class LLBinaryOriginLibrarySymbolProviderFactory(private val project: Project) :
         val ktLibraryModule = ktModule as? KaLibraryModule ?: return emptyList()
 
         return ktLibraryModule.binaryRoots
-            .filter { it.isDirectory() || it.extension == KLIB_FILE_EXTENSION }
+            .filter { it.isDirectory() || it.extension == KLIB_FILE_EXTENSION || it.extension == JAR_FILE_EXTENSION }
             .mapNotNull { it.tryResolveAsKLib() }
     }
 

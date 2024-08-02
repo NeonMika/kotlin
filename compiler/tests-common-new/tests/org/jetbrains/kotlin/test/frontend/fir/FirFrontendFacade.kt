@@ -200,7 +200,7 @@ open class FirFrontendFacade(
                 if (isCommon) {
                     val klibFiles = configuration.get(CLIConfigurationKeys.CONTENT_ROOTS).orEmpty()
                         .filterIsInstance<JvmClasspathRoot>()
-                        .filter { it.file.isDirectory || it.file.extension == "klib" }
+                        .filter { it.file.isDirectory || it.file.extension == "klib" || it.file.extension == "jar" }
                         .map { it.file.absolutePath }
 
                     val resolvedKLibs = klibFiles.map {

@@ -67,7 +67,7 @@ object ToolingSingleFileKlibResolveStrategy : SingleFileKlibResolveStrategy {
             libraryFile.isDirectory -> {
                 { action(libraryFile) }
             }
-            libraryFile.isFile && extension == KLIB_FILE_EXTENSION -> {
+            libraryFile.isFile && (extension == KLIB_FILE_EXTENSION || extension == JAR_FILE_EXTENSION) -> {
                 { libraryFile.withZipFileSystem { fs -> action(fs.file("/")) } }
             }
             else -> return null

@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.file.unzipTo
 import org.jetbrains.kotlin.library.impl.zippedKotlinLibraryChecks
 
+const val JAR_FILE_EXTENSION = "jar"
 const val KLIB_FILE_EXTENSION = "klib"
 const val KLIB_FILE_EXTENSION_WITH_DOT = ".$KLIB_FILE_EXTENSION"
 
