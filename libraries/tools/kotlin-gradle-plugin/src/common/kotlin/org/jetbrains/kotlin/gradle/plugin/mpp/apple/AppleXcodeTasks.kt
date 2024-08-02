@@ -199,6 +199,15 @@ internal fun Project.registerEmbedSwiftExportTask(
     val binaryTaskName = binary.embedSwiftExportTaskName()
 
     if (isMatchingBinary) {
+        if (!isRunWithXcodeEnvironment(
+                environment,
+                binaryTaskName,
+                "Embed swift export ${binary.namePrefix} library as requested by Xcode's environment variables"
+            )
+        ) {
+            return
+        }
+
         val swiftExportTask = registerSwiftExportTask(
             swiftExportExtension,
             SwiftExportDSLConstants.TASK_GROUP,
@@ -207,25 +216,59 @@ internal fun Project.registerEmbedSwiftExportTask(
             dependsOn(checkSandboxAndWriteProtectionTask(environment, binaryTaskName, environment.userScriptSandboxingEnabled))
         }
 
-        registerEmbedTask(binary, binaryTaskName, false, environment, swiftExportTask)
+        registerEmbedTask(binary, binaryTaskName, environment, swiftExportTask)
     }
 }
 
 internal fun Project.registerEmbedAndSignAppleFrameworkTask(framework: Framework, environment: XcodeEnvironment) {
     val frameworkTaskName = framework.embedAndSignTaskName()
+
+    if (!isRunWithXcodeEnvironment(
+            environment,
+            frameworkTaskName,
+            "Embed and sign ${framework.namePrefix} framework as requested by Xcode's environment variables"
+        )
+    ) {
+        return
+    }
+
     val assembleTask = registerAssembleAppleFrameworkTask(framework, environment)?.apply {
         dependsOn(checkSandboxAndWriteProtectionTask(environment, frameworkTaskName, environment.userScriptSandboxingEnabled))
     } ?: return
 
-    registerEmbedTask(framework, frameworkTaskName, !framework.isStatic, environment, assembleTask)
+    registerEmbedTask(framework, frameworkTaskName, environment, assembleTask) { !framework.isStatic }
+}
+
+private fun Project.isRunWithXcodeEnvironment(
+    environment: XcodeEnvironment,
+    taskName: String,
+    taskDescription: String,
+): Boolean {
+    val envBuildType = environment.buildType
+    val envTargets = environment.targets
+    val envEmbeddedFrameworksDir = environment.embeddedFrameworksDir
+
+    if (envBuildType == null || envTargets.isEmpty() || envEmbeddedFrameworksDir == null) {
+        locateOrRegisterTask<DefaultTask>(taskName) { task ->
+            task.group = BasePlugin.BUILD_GROUP
+            task.description = taskDescription
+            task.doFirst {
+                fireEnvException(taskName, environment)
+            }
+        }
+
+        return false
+    }
+
+    return true
 }
 
 private fun Project.registerEmbedTask(
     binary: NativeBinary,
     frameworkTaskName: String,
-    embedAndSignEnabled: Boolean,
     environment: XcodeEnvironment,
     dependencyTask: TaskProvider<out Task>,
+    embedAndSignEnabled: () -> Boolean = { true },
 ) {
     val envBuildType = environment.buildType
     val envTargets = environment.targets
@@ -233,21 +276,12 @@ private fun Project.registerEmbedTask(
     val envSign = environment.sign
     val userScriptSandboxingEnabled = environment.userScriptSandboxingEnabled
 
-    if (envBuildType == null || envTargets.isEmpty() || envEmbeddedFrameworksDir == null) {
-        locateOrRegisterTask<DefaultTask>(frameworkTaskName) { task ->
-            task.group = BasePlugin.BUILD_GROUP
-            task.description = "Embed and sign ${binary.namePrefix} framework as requested by Xcode's environment variables"
-            task.doFirst {
-                fireEnvException(frameworkTaskName, environment)
-            }
-        }
-        return
-    }
+    if (envBuildType == null || envTargets.isEmpty() || envEmbeddedFrameworksDir == null) return
 
     val embedAndSignTask = locateOrRegisterTask<EmbedAndSignTask>(frameworkTaskName) { task ->
         task.group = BasePlugin.BUILD_GROUP
         task.description = "Embed and sign ${binary.namePrefix} framework as requested by Xcode's environment variables"
-        task.isEnabled = embedAndSignEnabled
+        task.isEnabled = embedAndSignEnabled()
         task.inputs.apply {
             property("type", envBuildType)
             property("targets", envTargets)
