@@ -34,8 +34,6 @@ import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.mapToFile
 import org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl
 import java.io.File
-import java.io.IOException
-import java.nio.file.Files
 import javax.inject.Inject
 
 @Suppress("ConstPropertyName")
@@ -43,7 +41,6 @@ internal object AppleXcodeTasks {
     const val embedAndSignTaskPrefix = "embedAndSign"
     const val embedAndSignTaskPostfix = "AppleFrameworkForXcode"
     const val checkSandboxAndWriteProtection = "checkSandboxAndWriteProtection"
-    const val builtProductsDir = "builtProductsDir"
 }
 
 private fun Project.registerAssembleAppleFrameworkTask(framework: Framework, environment: XcodeEnvironment): TaskProvider<out Task>? {
@@ -148,42 +145,6 @@ private fun fireEnvException(frameworkTaskName: String, environment: XcodeEnviro
                     "('SDK_NAME', 'CONFIGURATION', 'TARGET_BUILD_DIR', 'ARCHS' and 'FRAMEWORKS_FOLDER_PATH' not provided)" +
                     "\n$environment"
         )
-    }
-}
-
-private fun fireSandboxException(frameworkTaskName: String, userScriptSandboxingEnabled: Boolean) {
-    val message = if (userScriptSandboxingEnabled) "You " else "BUILT_PRODUCTS_DIR is not accessible, probably you "
-    throw IllegalStateException(
-        message +
-                "have sandboxing for user scripts enabled." +
-                "\nTo make the $frameworkTaskName task pass, disable this feature. " +
-                "\nIn your Xcode project, navigate to \"Build Setting\", " +
-                "and under \"Build Options\" set \"User script sandboxing\" (ENABLE_USER_SCRIPT_SANDBOXING) to \"NO\". " +
-                "\nThen, run \"./gradlew --stop\" to stop the Gradle daemon" +
-                "\nFor more information, see documentation: https://jb.gg/ltd9e6"
-    )
-}
-
-private enum class DirAccessibility {
-    ACCESSIBLE,
-    NOT_ACCESSIBLE,
-    DOES_NOT_EXIST
-}
-
-private fun builtProductsDirAccessibility(builtProductsDir: File?): DirAccessibility {
-    return if (builtProductsDir != null) {
-        try {
-            Files.createDirectories(builtProductsDir.toPath())
-            val tempFile = File.createTempFile("sandbox", ".tmp", builtProductsDir)
-            if (tempFile.exists()) {
-                tempFile.delete()
-            }
-            DirAccessibility.ACCESSIBLE
-        } catch (e: IOException) {
-            DirAccessibility.NOT_ACCESSIBLE
-        }
-    } else {
-        DirAccessibility.DOES_NOT_EXIST
     }
 }
 
@@ -318,22 +279,13 @@ private fun Project.checkSandboxAndWriteProtectionTask(
     frameworkTaskName: String,
     userScriptSandboxingEnabled: Boolean,
 ) =
-    locateOrRegisterTask<DefaultTask>(AppleXcodeTasks.checkSandboxAndWriteProtection) { task ->
+    locateOrRegisterTask<CheckSandboxAndWriteProtectionTask>(AppleXcodeTasks.checkSandboxAndWriteProtection) { task ->
         task.group = BasePlugin.BUILD_GROUP
         task.description = "Check BUILT_PRODUCTS_DIR accessible and ENABLE_USER_SCRIPT_SANDBOXING not enabled"
-        task.inputs.property(AppleXcodeTasks.builtProductsDir, environment.builtProductsDir)
 
-        task.doLast {
-            val dirAccessible = builtProductsDirAccessibility(it.inputs.properties[AppleXcodeTasks.builtProductsDir] as File?)
-            when (dirAccessible) {
-                DirAccessibility.NOT_ACCESSIBLE -> fireSandboxException(frameworkTaskName, userScriptSandboxingEnabled)
-                DirAccessibility.DOES_NOT_EXIST,
-                DirAccessibility.ACCESSIBLE,
-                -> if (userScriptSandboxingEnabled) {
-                    fireSandboxException(frameworkTaskName, true)
-                }
-            }
-        }
+        task.directoryFile.set(environment.builtProductsDir)
+        task.frameworkTaskName.set(frameworkTaskName)
+        task.userScriptSandboxingEnabled.set(userScriptSandboxingEnabled)
     }
 
 private fun Project.shouldRegisterEmbedTask(environment: XcodeEnvironment, frameworkTaskName: String): Boolean {
