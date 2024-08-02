@@ -5,6 +5,7 @@
 
 @file:Suppress("OPT_IN_USAGE_ERROR")
 
+// CHECK-LABEL: define i32 @"kfun:#nonEmptySize(kotlin.IntArray){}kotlin.Int"
 // CHECK-NOT: call void @"kfun:kotlin.AssertionError#<init>(kotlin.Any?){}"
 fun nonEmptySize(x: IntArray): Int {
     assert(x.size != 0) { "x.size = ${x.size}" }
