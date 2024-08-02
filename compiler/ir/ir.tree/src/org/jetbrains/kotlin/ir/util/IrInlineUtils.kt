@@ -14,6 +14,12 @@ import org.jetbrains.kotlin.ir.symbols.IrFileSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNullable
 
+@RequiresOptIn(
+    message = "This API is supposed to be used only inside JVM backend.",
+)
+annotation class JvmIrInlineExperimental
+
+@JvmIrInlineExperimental
 var IrInlinedFunctionBlock.inlineCall: IrFunctionAccessExpression? by irAttribute(followAttributeOwner = true)
 
 val IrInlinedFunctionBlock.inlineDeclaration: IrDeclaration

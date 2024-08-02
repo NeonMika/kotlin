@@ -60,6 +60,7 @@ internal class MarkNecessaryInlinedClassesAsRegeneratedLowering(val context: Jvm
         super.visitInlinedFunctionBlock(inlinedBlock)
     }
 
+    @OptIn(JvmIrInlineExperimental::class)
     private fun IrInlinedFunctionBlock.collectDeclarationsThatMustBeRegenerated(): Set<IrAttributeContainer> {
         val classesToRegenerate = mutableSetOf<IrAttributeContainer>()
         this.acceptVoid(object : IrElementVisitorVoid {

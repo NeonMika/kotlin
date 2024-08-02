@@ -215,6 +215,7 @@ open class FunctionInlining(
                 origin = null,
                 statements = evaluationStatements + newStatements
             ).apply {
+                @OptIn(JvmIrInlineExperimental::class)
                 this.inlineCall = callSite
             }
 
