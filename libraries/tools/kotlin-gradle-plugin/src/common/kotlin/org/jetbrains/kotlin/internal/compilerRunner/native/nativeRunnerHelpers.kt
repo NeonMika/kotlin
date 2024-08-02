@@ -16,21 +16,22 @@ internal fun Provider<Boolean>.nativeDaemonEntryPoint() = map { useXcodeMessageS
     if (useXcodeMessageStyle) "daemonMainWithXcodeRenderer" else "daemonMain"
 }
 
-internal val NativeProperties.kotlinNativeCompilerJar: Provider<File>
-    get() = isUseEmbeddableCompilerJar.zip(actualNativeHomeDirectory) { useJar, nativeHomeDir ->
-        if (useJar) {
-            nativeHomeDir.resolve("konan/lib/kotlin-native-compiler-embeddable.jar")
-        } else {
-            nativeHomeDir.resolve("konan/lib/kotlin-native.jar")
-        }
+private fun Provider<File>.kotlinNativeCompilerJar(
+    isUseEmbeddableCompilerJar: Provider<Boolean>
+) = zip(isUseEmbeddableCompilerJar) { nativeHomeDir, useJar ->
+    if (useJar) {
+        nativeHomeDir.resolve("konan/lib/kotlin-native-compiler-embeddable.jar")
+    } else {
+        nativeHomeDir.resolve("konan/lib/kotlin-native.jar")
     }
+}
 
 internal fun ObjectFactory.nativeCompilerClasspath(
-    kotlinNativeCompilerJar: Provider<File>,
-    actualNativeHomeDirectory: Provider<File>,
+    nativeHomeDirectory: Provider<File>,
+    isUseEmbeddableCompilerJar: Provider<Boolean>,
 ) = fileCollection().from(
-    kotlinNativeCompilerJar,
-    actualNativeHomeDirectory.map { it.resolve("konan/lib/trove4j.jar") },
+    nativeHomeDirectory.kotlinNativeCompilerJar(isUseEmbeddableCompilerJar),
+    nativeHomeDirectory.map { it.resolve("konan/lib/trove4j.jar") },
 )
 
 internal fun nativeExecSystemProperties(
