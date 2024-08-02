@@ -133,7 +133,7 @@ dependencies {
     commonCompileOnly(project(":kotlin-tooling-metadata"))
     commonCompileOnly(project(":compiler:build-tools:kotlin-build-statistics"))
     commonCompileOnly(project(":native:swift:swift-export-standalone"))
-    commonCompileOnly(commonDependency("org.jetbrains.intellij.deps:asm-all")) { isTransitive = false }
+    commonCompileOnly(libs.asm) { isTransitive = false }
 
     commonImplementation(project(":kotlin-gradle-plugin-idea"))
     commonImplementation(project(":kotlin-gradle-plugin-idea-proto"))
@@ -156,7 +156,7 @@ dependencies {
 
     embedded(project(":kotlin-gradle-build-metrics"))
     embedded(project(":kotlin-gradle-statistics"))
-    embedded(commonDependency("org.jetbrains.intellij.deps:asm-all")) { isTransitive = false }
+    embedded(libs.asm) { isTransitive = false }
     embedded(commonDependency("com.google.code.gson:gson")) { isTransitive = false }
     embedded(libs.guava) { isTransitive = false }
     embedded(commonDependency("org.jetbrains.teamcity:serviceMessages")) { isTransitive = false }

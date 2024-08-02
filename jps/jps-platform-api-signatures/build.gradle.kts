@@ -8,7 +8,7 @@ plugins {
 
 dependencies {
     implementation(kotlinStdlib())
-    compileOnly(commonDependency("org.jetbrains.intellij.deps:asm-all"))
+    compileOnly(libs.asm)
     compileOnly(intellijPlatformUtil())
 }
 
