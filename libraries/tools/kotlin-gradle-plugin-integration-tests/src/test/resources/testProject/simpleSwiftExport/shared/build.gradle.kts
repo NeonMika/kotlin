@@ -11,7 +11,7 @@ kotlin {
 
     if (properties.containsKey("swiftexport.dsl.export")) {
         @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-        swiftexport {
+        swiftExport {
             export(project(":subproject"))
             export(project(":not-good-looking-project-name"))
         }
@@ -22,7 +22,7 @@ kotlin {
         }
     } else if (properties.containsKey("swiftexport.dsl.customName")) {
         @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-        swiftexport {
+        swiftExport {
             moduleName.set("CustomShared")
 
             export(project(":subproject")) {
@@ -35,7 +35,7 @@ kotlin {
         }
     } else if (properties.containsKey("swiftexport.dsl.flattenPackage")) {
         @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-        swiftexport {
+        swiftExport {
             flattenPackage.set("com.github.jetbrains.swiftexport")
 
             export(project(":subproject")) {
@@ -48,7 +48,7 @@ kotlin {
         }
     } else if (properties.containsKey("swiftexport.dsl.fullSample")) {
         @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-        swiftexport {
+        swiftExport {
             moduleName.set("Shared")
             flattenPackage.set("com.github.jetbrains.swiftexport")
 
@@ -71,7 +71,7 @@ kotlin {
         }
     } else {
         @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
-        swiftexport {}
+        swiftExport {}
     }
 }
 

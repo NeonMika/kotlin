@@ -297,7 +297,7 @@ private fun multiModuleSwiftExportProject(
     )
     val projectDependencies = subprojects.map { project.subProject(it, targets) }
     project.setupForSwiftExport(targets = targets) {
-        swiftexport {
+        swiftExport {
             projectDependencies.forEach { export(it) }
             code()
         }
@@ -325,7 +325,7 @@ private fun swiftExportProject(
         repositories.mavenLocal()
         kotlin {
             targets()
-            swiftexport {
+            swiftExport {
                 swiftExport()
             }
         }
