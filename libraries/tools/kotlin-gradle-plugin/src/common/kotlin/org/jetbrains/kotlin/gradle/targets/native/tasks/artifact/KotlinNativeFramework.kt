@@ -12,6 +12,7 @@ import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.internal.ClassLoadersCachingBuildService
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.KonanPropertiesBuildService
@@ -133,6 +134,9 @@ internal fun KotlinNativeArtifact.registerLinkFrameworkTask(
             .finalizeValueOnRead()
         task.konanPropertiesService
             .value(KonanPropertiesBuildService.registerIfAbsent(project))
+            .disallowChanges()
+        task.classLoadersCachingService
+            .value(ClassLoadersCachingBuildService.registerIfAbsent(project))
             .disallowChanges()
     }
     project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(resultTask)

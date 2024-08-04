@@ -11,6 +11,7 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.internal.ClassLoadersCachingBuildService
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
@@ -108,6 +109,9 @@ class KotlinNativeLibraryImpl(
                     .finalizeValueOnRead()
                 task.konanPropertiesService
                     .value(KonanPropertiesBuildService.registerIfAbsent(project))
+                    .disallowChanges()
+                task.classLoadersCachingService
+                    .value(ClassLoadersCachingBuildService.registerIfAbsent(project))
                     .disallowChanges()
             }
             resultTask.dependsOn(targetTask)
