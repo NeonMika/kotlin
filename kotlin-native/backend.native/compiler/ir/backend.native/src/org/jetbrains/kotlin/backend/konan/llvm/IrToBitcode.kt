@@ -2173,7 +2173,7 @@ internal class CodeGeneratorVisitor(
     }
 
     //-------------------------------------------------------------------------//
-    private fun evaluateCall(value: IrFunctionAccessExpression, resultSlot: LLVMValueRef?): LLVMValueRef {
+    private fun evaluateCall(value: IrCall, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateCall                   : ${ir2string(value)}"}
 
         intrinsicGenerator.tryEvaluateSpecialCall(value, resultSlot)?.let { return it }
@@ -2181,7 +2181,7 @@ internal class CodeGeneratorVisitor(
         val args = evaluateExplicitArgs(value)
 
         updateBuilderDebugLocation(value)
-        return evaluateFunctionCall(value as IrCall, args, resultLifetime(value), resultSlot)
+        return evaluateFunctionCall(value, args, resultLifetime(value), resultSlot)
     }
 
     //-------------------------------------------------------------------------//
