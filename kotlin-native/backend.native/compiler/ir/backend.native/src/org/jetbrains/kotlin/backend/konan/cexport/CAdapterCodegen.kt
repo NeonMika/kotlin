@@ -44,7 +44,8 @@ internal class CAdapterCodegen(
                 val function = declaration as FunctionDescriptor
                 val irFunction = irSymbol.owner as IrFunction
                 cname = "_konan_function_${owner.nextFunctionIndex()}"
-                val signature = LlvmFunctionSignature(irFunction, this@CAdapterCodegen)
+                val implFunction = irFunction as? IrSimpleFunction ?: context.getConstructorImpl(irFunction as IrConstructor)
+                val signature = LlvmFunctionSignature(implFunction, this@CAdapterCodegen)
                 val bridgeFunctionProto = signature.toProto(cname, null, LLVMLinkage.LLVMExternalLinkage)
                 // If function is virtual, we need to resolve receiver properly.
                 generateFunction(codegen, bridgeFunctionProto) {
@@ -53,7 +54,7 @@ internal class CAdapterCodegen(
                     } else {
                         // KT-45468: Alias insertion may not be handled by LLVM properly, in case callee is in the cache.
                         // Hence, insert not an alias but a wrapper, hoping it will be optimized out later.
-                        codegen.llvmFunction(irFunction as? IrSimpleFunction ?: context.getConstructorImpl(irFunction as IrConstructor))
+                        codegen.llvmFunction(implFunction)
                     }
 
                     val args = signature.parameterTypes.indices.map { param(it) }
