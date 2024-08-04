@@ -113,7 +113,12 @@ internal abstract class KotlinNativeToolRunner @Inject constructor(
                 // Required for KotlinNativePaths to properly detect konan home directory
                 object : ParentClassLoaderProvider {
                     @OptIn(KotlinBuildToolsInternalJdkUtils::class)
-                    override fun getClassLoader(): ClassLoader = getJdkClassesClassLoader() ?: ClassLoader.getSystemClassLoader()
+                    private val jdkClassesClassLoader = getJdkClassesClassLoader()
+
+                    override fun getClassLoader(): ClassLoader? = jdkClassesClassLoader
+                    override fun hashCode(): Int = jdkClassesClassLoader.hashCode()
+                    override fun equals(other: Any?): Boolean =
+                        other is ParentClassLoaderProvider && other.getClassLoader() == jdkClassesClassLoader
                 }
             )
             if (toolSpec.jvmArgs.get().contains("-ea")) isolatedClassLoader.setDefaultAssertionStatus(true)
