@@ -61,6 +61,8 @@ internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleF
             }
 
             valueParameters = irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
+
+            annotations = irConstructor.annotations
         }
     }
 }
