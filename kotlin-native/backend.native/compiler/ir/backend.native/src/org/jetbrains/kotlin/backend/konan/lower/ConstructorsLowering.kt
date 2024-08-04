@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
+import org.jetbrains.kotlin.backend.common.ir.addExtensionReceiver
 import org.jetbrains.kotlin.backend.common.lower.at
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.konan.Context
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.getOrSetIfNull
 
 internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
@@ -55,15 +55,11 @@ internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleF
                 type = parentClass.defaultType
             }
 
-            val outerReceiverParameter = irConstructor.dispatchReceiverParameter
-            valueParameters = if (outerReceiverParameter == null)
-                irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
-            else {
-                require(parentClass.isInner) { "Expected an inner class: ${parentClass.render()}" }
-                listOf(outerReceiverParameter.copyTo(
-                        function, index = 0, name = Name.identifier("\$outer"), type = outerReceiverParameter.type)
-                ) + irConstructor.valueParameters.map { it.copyTo(function, index = it.index + 1, type = it.type) }
+            irConstructor.dispatchReceiverParameter?.let { outerReceiverParameter ->
+                addExtensionReceiver(outerReceiverParameter.type)
             }
+
+            valueParameters = irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
         }
     }
 }
@@ -117,12 +113,10 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
                             irBuilder.at(expression).irGet(implFunction.dispatchReceiverParameter!!)
                         declaration.dispatchReceiverParameter -> {
                             require(constructedClass.isInner) { "Expected an inner class: ${constructedClass.render()}" }
-                            irBuilder.at(expression).irGet(implFunction.valueParameters[0])
+                            irBuilder.at(expression).irGet(implFunction.extensionReceiverParameter!!)
                         }
-                        is IrValueParameter -> {
-                            val shift = if (constructedClass.isInner) 1 else 0
-                            irBuilder.at(expression).irGet(implFunction.valueParameters[value.index + shift])
-                        }
+                        is IrValueParameter ->
+                            irBuilder.at(expression).irGet(implFunction.valueParameters[value.index])
                         else -> expression
                     }
                 }
@@ -195,16 +189,9 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
     }
 
     private fun IrFunctionAccessExpression.fillArgumentsFrom(callSite: IrFunctionAccessExpression) {
-        val shift: Int
-        val dispatchReceiver = callSite.dispatchReceiver
-        if (dispatchReceiver == null)
-            shift = 0
-        else { // A construction of an inner class.
-            shift = 1
-            putValueArgument(0, dispatchReceiver)
-        }
+        extensionReceiver = callSite.dispatchReceiver // For inner classes.
         (0..<callSite.valueArgumentsCount).forEach {
-            putValueArgument(it + shift, callSite.getValueArgument(it))
+            putValueArgument(it, callSite.getValueArgument(it))
         }
     }
 }
