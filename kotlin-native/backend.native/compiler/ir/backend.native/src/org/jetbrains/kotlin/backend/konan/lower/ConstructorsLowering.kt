@@ -85,13 +85,17 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
     override fun visitConstructor(declaration: IrConstructor, data: IrDeclaration?): IrStatement {
         declaration.transformChildren(this, declaration)
 
+        require(!declaration.isObjCConstructor) { "No Obj-C constructor is expected here: ${declaration.render()}" }
+        val body = declaration.body
+        declaration.body = null
         val constructedClass = declaration.constructedClass
-        if (declaration.isObjCConstructor || constructedClass.isInlined()) return declaration
+        // Inline classes constructors are intrinsified, but the constructors themselves are used
+        // in [IrTypeInlineClassesSupport.getInlinedClassUnderlyingType], so they can't be removed.
+        if (constructedClass.isInlined())
+            return declaration
 
         val implFunction = context.getConstructorImpl(declaration)
-        val body = declaration.body
         if (body != null) {
-            declaration.body = null
             // This is not entirely correct since the constructed class' type parameters should be copied
             // to the impl function, and the body itself also needs proper deep copying with types replacement.
             // But, since this lowering is run at the very end of the pipeline, it's OK to leave it as is
