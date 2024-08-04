@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.irAttribute
 import org.jetbrains.kotlin.ir.objcinterop.isExternalObjCClass
+import org.jetbrains.kotlin.ir.objcinterop.isObjCClass
 import org.jetbrains.kotlin.ir.objcinterop.isObjCConstructor
 import org.jetbrains.kotlin.ir.types.isAny
 import org.jetbrains.kotlin.ir.types.isString
@@ -148,6 +149,9 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
         val implFunction = context.getConstructorImpl(constructor)
         val irBuilder = context.createIrBuilder(data!!.symbol, expression.startOffset, expression.endOffset)
         return when {
+            constructor.constructedClass.isObjCClass() -> {
+                error("A call to an Obj-C class constructor should've been lowered: ${expression.render()}")
+            }
             constructor.constructedClass.isArray -> {
                 require(expression.dispatchReceiver == null) { "An array constructor call cannot have the dispatch receiver: ${expression.render()}" }
                 require(expression.valueArgumentsCount == 1) { "Expected a call to the array constructor with a single argument: ${expression.render()}" }
