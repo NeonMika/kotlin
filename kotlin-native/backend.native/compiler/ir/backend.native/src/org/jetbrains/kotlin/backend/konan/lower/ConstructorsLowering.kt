@@ -34,8 +34,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.getOrSetIfNull
 internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
 internal var IrSimpleFunction.constructor: IrConstructor? by irAttribute(followAttributeOwner = false)
 
-internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction {
-    return irConstructor::constructorImplFunction.getOrSetIfNull {
+internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction = synchronized(irConstructor) {
+    irConstructor::constructorImplFunction.getOrSetIfNull {
         irFactory.buildFun {
             name = irConstructor.name
             startOffset = irConstructor.startOffset
