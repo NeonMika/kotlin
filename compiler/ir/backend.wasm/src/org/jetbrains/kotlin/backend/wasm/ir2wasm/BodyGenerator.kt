@@ -748,8 +748,14 @@ class BodyGenerator(
     }
 
     override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock) {
-        body.buildNop(inlinedBlock.inlineCall.getSourceLocation())
-        functionContext.stepIntoInlinedFunction(inlinedBlock.inlineCall.symbol.owner)
+        body.buildNop(inlinedBlock.getSourceLocation())
+
+        val inlineFunction = when (val inlineDeclaration = inlinedBlock.inlineDeclaration) {
+            is IrProperty -> inlineDeclaration.getter
+            else -> inlineDeclaration as? IrFunction
+        } ?: return super.visitInlinedFunctionBlock(inlinedBlock)
+
+        functionContext.stepIntoInlinedFunction(inlineFunction)
         super.visitInlinedFunctionBlock(inlinedBlock)
         functionContext.stepOutLastInlinedFunction()
     }
