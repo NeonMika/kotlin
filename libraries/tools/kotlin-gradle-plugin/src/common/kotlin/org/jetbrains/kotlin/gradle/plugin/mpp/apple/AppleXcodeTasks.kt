@@ -177,7 +177,7 @@ internal fun Project.registerEmbedSwiftExportTask(
             dependsOn(checkSandboxAndWriteProtectionTask(environment, binaryTaskName, environment.userScriptSandboxingEnabled))
         }
 
-        registerEmbedTask(binary, binaryTaskName, environment, swiftExportTask)
+        registerEmbedTask(binary, binaryTaskName, environment, swiftExportTask) { false }
     }
 }
 
