@@ -69,6 +69,8 @@ kotlin {
                 implementation(project(":not-good-looking-project-name"))
             }
         }
+    } else if (properties.containsKey("swiftexport.dsl.placeholder")) {
+/*REPLACE_ME*/
     } else {
         @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
         swiftExport {}

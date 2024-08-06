@@ -7,8 +7,10 @@ package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.util.DSL_REPLACE_PLACEHOLDER
 import org.jetbrains.kotlin.gradle.util.SimpleSwiftExportProperties
 import org.jetbrains.kotlin.gradle.util.enableSwiftExport
+import org.jetbrains.kotlin.gradle.util.replaceText
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
@@ -179,6 +181,67 @@ class SwiftExportDslIT : KGPBaseTest() {
                     subprojectSwiftPath.readText()
                         .contains("public typealias LibFoo = ExportedKotlinPackages.com.subproject.library.LibFoo")
                 )
+            }
+        }
+    }
+
+    @DisplayName("embedSwiftExport executes normally when external dependency is defined in Swift Export DSL")
+    @GradleTest
+    fun testSwiftExportDSLWithExternalDependency(
+        gradleVersion: GradleVersion,
+        @TempDir testBuildDir: Path,
+    ) {
+        // Publish dependency
+        val multiplatformLibrary = nativeProject(
+            "multiplatformLibrary",
+            gradleVersion
+        ) {
+            build(
+                "build",
+                "publishAllPublicationsToMavenRepository",
+                buildOptions = defaultBuildOptions.copy(
+                    configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
+                )
+            ) {
+                assertTasksExecuted(":compileKotlinIosArm64", ":compileKotlinIosSimulatorArm64", ":compileKotlinIosX64")
+                assertTasksExecuted(":publishKotlinMultiplatformPublicationToMavenRepository")
+            }
+        }
+
+        val mavenDependency = "com.jetbrains.library:multiplatformLibrary:1.0"
+        val mavenUrl = multiplatformLibrary.projectPath.resolve("build/repo")
+
+        nativeProject(
+            "simpleSwiftExport",
+            gradleVersion,
+            dependencyManagement = DependencyManagement.DefaultDependencyManagement(setOf(mavenUrl.absolutePathString()))
+        ) {
+            projectPath.enableSwiftExport()
+
+            projectPath.resolve("shared/build.gradle.kts").replaceText(
+                DSL_REPLACE_PLACEHOLDER,
+                """
+                |       @OptIn(org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl::class)
+                |       swiftExport {
+                |           export("$mavenDependency")
+                |           export(project(":subproject"))
+                |       }
+                """.trimMargin()
+            )
+
+            build(
+                ":shared:embedSwiftExportForXcode",
+                "-P${SimpleSwiftExportProperties.DSL_PLACEHOLDER}",
+                environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
+                buildOptions = defaultBuildOptions.copy(
+                    configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
+                )
+            ) {
+                val buildProductsDir = this@nativeProject.gradleRunner.environment?.get("BUILT_PRODUCTS_DIR")?.let { File(it) }
+                assertNotNull(buildProductsDir)
+
+                val multiplatformLibrarySwiftModule = buildProductsDir.resolve("MultiplatformLibrary.swiftmodule")
+                assertDirectoryExists(multiplatformLibrarySwiftModule.toPath(), "MultiplatformLibrary.swiftmodule doesn't exist")
             }
         }
     }
