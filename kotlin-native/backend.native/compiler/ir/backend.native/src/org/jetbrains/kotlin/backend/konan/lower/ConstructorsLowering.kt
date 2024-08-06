@@ -56,6 +56,7 @@ internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleF
                 type = parentClass.defaultType
             }
 
+            require(irConstructor.extensionReceiverParameter == null) { "A constructor with an extension receiver: ${irConstructor.render()}" }
             irConstructor.dispatchReceiverParameter?.let { outerReceiverParameter ->
                 addExtensionReceiver(outerReceiverParameter.type)
             }
@@ -220,6 +221,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
             error("No outer receiver is supplied for an inner class constructor call: ${callSite.render()}")
         if (outerReceiver != null && !constructedClass.isInner)
             error("The outer receiver is supplied for a non-inner class constructor call: ${callSite.render()}")
+        require(callSite.extensionReceiver == null) { "Unexpected extension receiver: ${callSite.render()}" }
         this.extensionReceiver = outerReceiver
         (0..<callSite.valueArgumentsCount).forEach {
             putValueArgument(it, callSite.getValueArgument(it))
