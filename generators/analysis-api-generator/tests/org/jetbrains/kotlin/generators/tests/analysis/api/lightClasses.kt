@@ -81,7 +81,10 @@ private fun lightClassesByPsiTestsInit(isLibrary: Boolean = false): TestGroup.Te
 
 private fun TestGroup.lightClassesByPsiTests() {
     testClass<AbstractSymbolLightClassesByPsiForSourceTest>(init = lightClassesByPsiTestsInit())
+    testClass<AbstractJsSymbolLightClassesByPsiForSourceTest>(init = lightClassesByPsiTestsInit())
+
     testClass<AbstractSymbolLightClassesByPsiForLibraryTest>(init = lightClassesByPsiTestsInit(isLibrary = true))
+    testClass<AbstractJsSymbolLightClassesByPsiForLibraryTest>(init = lightClassesByPsiTestsInit(isLibrary = true))
 
     testClass<AbstractSymbolLightClassesParentingByPsiForSourceTest>(init = lightClassesByPsiTestsInit())
     testClass<AbstractSymbolLightClassesParentingByPsiForLibraryTest>(init = lightClassesByPsiTestsInit(isLibrary = true))

@@ -9,6 +9,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.SyntaxTraverser
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -26,3 +28,6 @@ internal fun getLightClassesFromFile(ktFile: KtFile): List<PsiClass> {
         }
     }.filterIsInstance<PsiClass>()
 }
+
+internal val TargetPlatform.lightClassTestDataPrefix: String
+    get() = if (isJvm()) "" else "kmp"

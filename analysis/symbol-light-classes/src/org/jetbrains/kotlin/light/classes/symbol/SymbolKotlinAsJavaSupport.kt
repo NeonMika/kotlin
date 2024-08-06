@@ -5,11 +5,15 @@
 
 package org.jetbrains.kotlin.light.classes.symbol
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.api.platform.modification.createAllLibrariesModificationTracker
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
@@ -23,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -40,14 +45,54 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
+import java.util.WeakHashMap
+
+private val KMP_CACHE: ThreadLocal<MutableMap<KtElement, KtLightClass?>> = ThreadLocal.withInitial { null }
+
+private val isMultiplatformSupportAvailable: Boolean
+    get() = KMP_CACHE.get() != null
+
+/**
+ * Enables light classes in non-JVM modules inside the given [block].
+ *
+ * The provided light classes might not correctly represent non-JVM concepts.
+ * E.g., while class types provide qualified class names, [com.intellij.psi.impl.source.PsiClassReferenceType.resolve] might return
+ * `false`, as in non-JVM modules there is usually no configured JDK.
+ *
+ * The method is designed to be used only for UAST (see https://plugins.jetbrains.com/docs/intellij/uast.html) in Android Lint.
+ */
+@KaNonPublicApi
+@RequiresReadLock
+fun <T> withMultiplatformLightClassSupport(block: () -> T): T {
+    if (isMultiplatformSupportAvailable) {
+        // Allow reentrant access
+        return block()
+    }
+
+    require(ApplicationManager.getApplication().isReadAccessAllowed) { "The method can only run inside a read action" }
+    require(!ApplicationManager.getApplication().isWriteAccessAllowed) { "The method cannot be run inside a write action" }
+
+    try {
+        KMP_CACHE.set(WeakHashMap())
+        return block()
+    } finally {
+        KMP_CACHE.set(null)
+    }
+}
+
+private fun KaModule.isLightClassSupportAvailable(): Boolean {
+    return targetPlatform.has<JvmPlatform>() || isMultiplatformSupportAvailable
+}
 
 internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KaModule>(project) {
     private val projectStructureProvider by lazy { KotlinProjectStructureProvider.Companion.getInstance(project) }
 
-    private fun PsiElement.getModuleIfSupportEnabled(): KaModule? = projectStructureProvider.getModule(
-        element = this,
-        useSiteModule = null,
-    ).takeIf(KaModule::isLightClassesEnabled)
+    private fun PsiElement.getModuleIfSupportEnabled(): KaModule? {
+        return projectStructureProvider.getModule(
+            element = this,
+            useSiteModule = null,
+        ).takeIf(KaModule::isLightClassSupportAvailable)
+    }
 
     override fun findClassOrObjectDeclarationsInPackage(
         packageFqName: FqName,
@@ -120,7 +165,21 @@ internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupport
     }
 
     override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject): KtLightClass? {
-        return DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject(classOrObject, project)
+        val lightClass = DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject(classOrObject, project)
+        if (lightClass != null) {
+            return lightClass
+        }
+
+        if (isMultiplatformSupportAvailable) {
+            val containingFile = classOrObject.containingKtFile
+            if (containingFile is KtDecompiledFile && containingFile !is KtClsFile) {
+                // Light classes for binary declarations are built over decompiled Java stubs.
+                // We don't have them for KNM files, so here we build a dumb class stub to expose at least supertypes.
+                return SymbolBasedFakeLightClass(classOrObject)
+            }
+        }
+
+        return null
     }
 
     override fun createInstanceOfLightClass(classOrObject: KtClassOrObject): KtLightClass? {
@@ -164,7 +223,7 @@ internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupport
         )
 
     override fun facadeIsApplicable(module: KaModule, file: KtFile): Boolean =
-        module.isFromSourceOrLibraryBinary() && module.isLightClassesEnabled()
+        module.isFromSourceOrLibraryBinary() && module.isLightClassSupportAvailable()
 
     override fun getKotlinInternalClasses(fqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
         val facadeKtFiles = project.createDeclarationProvider(scope, null).findInternalFilesForFacade(fqName)
@@ -197,6 +256,15 @@ internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupport
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = SymbolBasedFakeLightClass(classOrObject)
 
+    override fun <E : KtElement, R : KtLightClass> cacheLightClass(element: E, provider: CachedValueProvider<R>): R? {
+        return if (isMultiplatformSupportAvailable) {
+            @Suppress("UNCHECKED_CAST")
+            KMP_CACHE.get().computeIfAbsent(element) { provider.compute()?.value } as R?
+        } else {
+            super.cacheLightClass(element, provider)
+        }
+    }
+
     private fun KtElement.isFromSourceOrLibraryBinary(): Boolean = getModuleIfSupportEnabled()?.isFromSourceOrLibraryBinary() == true
 
     private fun KaModule.isFromSourceOrLibraryBinary(): Boolean {
@@ -208,5 +276,3 @@ internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupport
         }
     }
 }
-
-private fun KaModule.isLightClassesEnabled(): Boolean = targetPlatform.has<JvmPlatform>()
