@@ -1155,7 +1155,7 @@ private fun ObjCExportCodeGenerator.generateObjCImpForArrayConstructor(
 
 // TODO: cache bridges.
 private fun ObjCExportCodeGenerator.generateKotlinToObjCBridge(
-        irFunction: IrFunction,
+        irFunction: IrSimpleFunction,
         baseMethod: ObjCMethodSpec.BaseMethod<IrSimpleFunctionSymbol>
 ): ConstPointer {
     val baseIrFunction = baseMethod.owner
@@ -1164,8 +1164,7 @@ private fun ObjCExportCodeGenerator.generateKotlinToObjCBridge(
 
     val parameterToBase = irFunction.allParameters.zip(baseIrFunction.allParameters).toMap()
 
-    val implFunction = irFunction as? IrSimpleFunction ?: context.getConstructorImpl(irFunction as IrConstructor)
-    val functionType = LlvmFunctionSignature(implFunction, codegen)
+    val functionType = LlvmFunctionSignature(irFunction, codegen)
     val functionName = "kotlin2objc_${baseIrFunction.computeSymbolName()}"
     val result = functionGenerator(functionType.toProto(functionName, null, LLVMLinkage.LLVMInternalLinkage)).generate {
         var errorOutPtr: LLVMValueRef? = null
@@ -1418,7 +1417,7 @@ private fun MethodBridge.ReturnValue.isAutoreleasedObjCReference(): Boolean = wh
  * ```
  */
 private fun ObjCExportCodeGenerator.createReverseAdapter(
-        irFunction: IrFunction,
+        irFunction: IrSimpleFunction,
         baseMethod: ObjCMethodSpec.BaseMethod<IrSimpleFunctionSymbol>,
         vtableIndex: Int?,
         itablePlace: ClassLayoutBuilder.InterfaceTablePlace?
