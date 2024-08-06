@@ -82,19 +82,31 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
         return super.visitDeclaration(declaration, declaration)
     }
 
-    override fun visitConstructor(declaration: IrConstructor, data: IrDeclaration?): IrStatement {
+    override fun visitClass(declaration: IrClass, data: IrDeclaration?): IrStatement {
         declaration.transformChildren(this, declaration)
 
-        require(!declaration.isObjCConstructor) { "No Obj-C constructor is expected here: ${declaration.render()}" }
-        val body = declaration.body
-        declaration.body = null
-        val constructedClass = declaration.constructedClass
+        declaration.declarations.transformFlat {
+            (it as? IrConstructor)?.let { constructor ->
+                buildConstructorImpl(constructor)?.let { constructorImpl ->
+                    listOf(constructor, constructorImpl)
+                }
+            }
+        }
+
+        return declaration
+    }
+
+    private fun buildConstructorImpl(constructor: IrConstructor): IrSimpleFunction? {
+        require(!constructor.isObjCConstructor) { "No Obj-C constructor is expected here: ${constructor.render()}" }
+        val body = constructor.body
+        constructor.body = null
+        val constructedClass = constructor.constructedClass
         // Inline classes constructors are intrinsified, but the constructors themselves are used
         // in [IrTypeInlineClassesSupport.getInlinedClassUnderlyingType], so they can't be removed.
         if (constructedClass.isInlined())
-            return declaration
+            return null
 
-        val implFunction = context.getConstructorImpl(declaration)
+        val implFunction = context.getConstructorImpl(constructor)
         if (body != null) {
             // This is not entirely correct since the constructed class' type parameters should be copied
             // to the impl function, and the body itself also needs proper deep copying with types replacement.
@@ -107,7 +119,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
                 override fun visitReturn(expression: IrReturn): IrExpression {
                     expression.transformChildrenVoid()
 
-                    return if (expression.returnTargetSymbol == declaration.symbol)
+                    return if (expression.returnTargetSymbol == constructor.symbol)
                         irBuilder.at(expression).irReturn(expression.value)
                     else expression
                 }
@@ -118,7 +130,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
                     return when (val value = expression.symbol.owner) {
                         constructedClass.thisReceiver ->
                             irBuilder.at(expression).irGet(implFunction.dispatchReceiverParameter!!)
-                        declaration.dispatchReceiverParameter -> {
+                        constructor.dispatchReceiverParameter -> {
                             require(constructedClass.isInner) { "Expected an inner class: ${constructedClass.render()}" }
                             irBuilder.at(expression).irGet(implFunction.extensionReceiverParameter!!)
                         }

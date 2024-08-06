@@ -508,6 +508,12 @@ private val autoboxPhase = createFileLoweringPhase(
         prerequisite = setOf(bridgesPhase, coroutinesPhase)
 )
 
+private val constructorsLoweringPhase = createFileLoweringPhase(
+    name = "ConstructorsLowering",
+    description = "Replace constructor calls by (alloc + static call)",
+    lowering = ::ConstructorsLowering,
+)
+
 private val expressionBodyTransformPhase = createFileLoweringPhase(
         ::ExpressionBodyTransformer,
         name = "ExpressionBodyTransformer",
@@ -538,12 +544,6 @@ internal val ReturnsInsertionPhase = createFileLoweringPhase(
         description = "Returns insertion for Unit functions",
         prerequisite = setOf(autoboxPhase, coroutinesPhase, enumClassPhase),
         lowering = ::ReturnsInsertionLowering,
-)
-
-internal val ConstructorsLoweringPhase = createFileLoweringPhase(
-        name = "ConstructorsLowering",
-        description = "Replace constructor calls by (alloc + static call)",
-        lowering = ::ConstructorsLowering,
 )
 
 internal val InlineClassPropertyAccessorsPhase = createFileLoweringPhase(
@@ -670,6 +670,7 @@ internal fun PhaseEngine<NativeGenerationState>.getLoweringsAfterInlining(): Low
         exportInternalAbiPhase.takeIf { context.config.produce.isCache },
         useInternalAbiPhase,
         autoboxPhase,
+        constructorsLoweringPhase,
 )
 
 private fun createFileLoweringPhase(
