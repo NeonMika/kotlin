@@ -232,4 +232,95 @@ class BuildCacheIT : KGPBaseTest() {
             }
         }
     }
+
+    @DisplayName("A compilation error doesn't break kapt incremental compilation after restoring from build cache")
+    @GradleTest
+    fun testKaptIncrementalCompilationAfterCacheHitAndCompilationError(gradleVersion: GradleVersion) {
+        project("kapt2/kaptAvoidance", gradleVersion) {
+            enableLocalBuildCache(localBuildCacheDir)
+            build("assemble")
+            build("clean", "assemble") {
+                assertTasksFromCache(":app:kaptGenerateStubsKotlin")
+                assertTasksFromCache(":app:kaptKotlin")
+                assertTasksFromCache(":app:compileKotlin")
+                assertTasksFromCache(":lib:compileKotlin")
+            }
+
+            val fileToEdit = projectPath.resolve("app/src/main/kotlin/AppClass.kt")
+            fileToEdit.modify { current ->
+                val lastBrace = current.lastIndexOf("}")
+                current.substring(0, lastBrace) +
+                        "internal class InternalAppClass {\n @example.ExampleAnnotation\n" +
+                        "        fun intFunGen() : InternalAppClass {\n" +
+                        "            return \n" +
+                        "        }\n }\n }"
+            }
+
+            buildAndFail("assemble", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertTasksFailed(":app:compileKotlin")
+                assertOutputDoesNotContain("On recompilation full rebuild will be performed")
+                assertCompiledKotlinSources(listOf(projectPath.relativize(fileToEdit)), output)
+            }
+
+            fileToEdit.modify { it.replace("return", "return this") }
+
+            build("assemble", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertIncrementalCompilation(expectedCompiledKotlinFiles = listOf(projectPath.relativize(fileToEdit)))
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(fileToEdit)),
+                    getOutputForTask(":app:kaptGenerateStubsKotlin"),
+                    errorMessageSuffix = " in task ':app:kaptGenerateStubsKotlin'"
+                )
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(fileToEdit)),
+                    getOutputForTask(":app:compileKotlin"),
+                    errorMessageSuffix = " in task ':app:compileKotlin'"
+                )
+            }
+        }
+    }
+
+    @DisplayName("A compilation error doesn't break kapt incremental compilation in test sources after restoring from build cache")
+    @GradleTest
+    fun testKaptIncrementalCompilationInTestSourcesAfterCacheHit(gradleVersion: GradleVersion) {
+        project("kapt2/kaptAvoidance", gradleVersion) {
+            enableLocalBuildCache(localBuildCacheDir)
+            build("build")
+            build("clean", "build") {
+                assertTasksFromCache(":app:kaptGenerateStubsTestKotlin")
+                assertTasksFromCache(":app:kaptTestKotlin")
+                assertTasksFromCache(":app:compileTestKotlin")
+            }
+
+            val fileToEdit = projectPath.resolve("app/src/main/kotlin/AppClass.kt")
+            val testFileToEdit = projectPath.resolve("app/src/test/kotlin/AppClassTest.kt")
+            fileToEdit.modify {
+                it.replace(
+                    "val testVal: String = \"text\"",
+                    "var testVal: String = \"text\".plus()"
+                )
+            }
+
+            buildAndFail("build", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertTasksFailed(":app:compileKotlin")
+                assertCompiledKotlinSources(listOf(projectPath.relativize(fileToEdit)), output)
+            }
+
+            fileToEdit.modify { it.replace("\"text\".plus()", "\"text\".plus(\"+\")") }
+            testFileToEdit.modify { it.replace("\"text\"", "\"text+\"") }
+
+            build("build", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(testFileToEdit)),
+                    getOutputForTask(":app:kaptGenerateStubsTestKotlin"),
+                    errorMessageSuffix = " in task ':app:kaptGenerateStubsTestKotlin'"
+                )
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(testFileToEdit)),
+                    getOutputForTask(":app:compileTestKotlin"),
+                    errorMessageSuffix = " in task ':app:compileTestKotlin'"
+                )
+            }
+        }
+    }
 }
