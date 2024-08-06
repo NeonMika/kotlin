@@ -108,10 +108,6 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
 
         val implFunction = context.getConstructorImpl(constructor)
         if (body != null) {
-            // This is not entirely correct since the constructed class' type parameters should be copied
-            // to the impl function, and the body itself also needs proper deep copying with types replacement.
-            // But, since this lowering is run at the very end of the pipeline, it's OK to leave it as is
-            // to simplify things a bit (the codegen will work just fine).
             implFunction.body = body as IrBlockBody
             body.setDeclarationsParent(implFunction)
             val irBuilder = context.createIrBuilder(implFunction.symbol)
