@@ -103,11 +103,12 @@ open class FirFrontendFacade(
     override fun analyze(module: TestModule): FirOutputArtifact {
         val isMppSupported = module.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)
         val sortedModules = if (isMppSupported) sortDependsOnTopologically(module) else listOf(module)
+        val moduleDataMap: MutableMap<TestModule, FirModuleData> = mutableMapOf<TestModule, FirModuleData>()
 
         val firOutputPartForDependsOnModules = sortedModules.map { module ->
             val sortedModules = if (isMppSupported) sortDependsOnTopologically(module) else listOf(module)
 
-            val (moduleDataMap, moduleDataProvider) = initializeModuleData(sortedModules)
+            val moduleDataProvider = initializeModuleData(moduleDataMap, sortedModules)
 
             val project = testServices.compilerConfigurationProvider.getProject(module)
             val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
@@ -137,7 +138,7 @@ open class FirFrontendFacade(
         }
     }
 
-    private fun initializeModuleData(modules: List<TestModule>): Pair<Map<TestModule, FirModuleData>, ModuleDataProvider> {
+    private fun initializeModuleData(moduleDataMap: MutableMap<TestModule, FirModuleData>, modules: List<TestModule>): ModuleDataProvider {
         val mainModule = modules.last()
 
         val targetPlatform = mainModule.targetPlatform
@@ -153,9 +154,10 @@ open class FirFrontendFacade(
         val libraryList = initializeLibraryList(listOf(mainModule), binaryModuleData, targetPlatform, configuration, testServices)
 
         val moduleInfoProvider = testServices.firModuleInfoProvider
-        val moduleDataMap = mutableMapOf<TestModule, FirModuleData>()
 
         for (module in modules) {
+            if (moduleDataMap.containsKey(module)) continue
+
             val regularModules = libraryList.regularDependencies + moduleInfoProvider.getRegularDependentSourceModules(module)
             val friendModules = libraryList.friendsDependencies + moduleInfoProvider.getDependentFriendSourceModules(module)
             val dependsOnModules = libraryList.dependsOnDependencies + moduleInfoProvider.getDependentDependsOnSourceModules(module)
@@ -174,7 +176,7 @@ open class FirFrontendFacade(
             moduleDataMap[module] = moduleData
         }
 
-        return moduleDataMap to libraryList.moduleDataProvider
+        return libraryList.moduleDataProvider
     }
 
     private fun createLibrarySession(
