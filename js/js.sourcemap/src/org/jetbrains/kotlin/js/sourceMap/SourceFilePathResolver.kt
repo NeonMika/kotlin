@@ -69,7 +69,8 @@ class SourceFilePathResolver(
         fun create(configuration: CompilerConfiguration) = create(
             sourceRoots = configuration.get(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, emptyList()),
             sourceMapPrefix = configuration.get(JSConfigurationKeys.SOURCE_MAP_PREFIX, ""),
-            outputDir = configuration.get(JSConfigurationKeys.OUTPUT_DIR)
+            outputDir = configuration.get(JSConfigurationKeys.OUTPUT_DIR),
+            includeKlibFiles = configuration.getBoolean(JSConfigurationKeys.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES)
         )
 
         @JvmStatic
