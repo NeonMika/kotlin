@@ -41,6 +41,10 @@ public class JSConfigurationKeys {
     public static final CompilerConfigurationKey<SourceMapNamesPolicy> SOURCEMAP_NAMES_POLICY = CompilerConfigurationKey.create(
             "a policy to generate a mapping from generated identifiers to their corresponding original names");
 
+    // TODO: Discuss if we want to give users ability to setup this configuration. The only "valid" case I've found for a module without physical files is our stepping tests
+    public static final CompilerConfigurationKey<List<String>> SOURCE_MAP_FORCED_MODULES = CompilerConfigurationKey.create(
+            "list of modules for which we should generate mappings even if there is no physical files inside");
+
     public static final CompilerConfigurationKey<Boolean> META_INFO =
             CompilerConfigurationKey.create("generate .meta.js and .kjsm files");
 

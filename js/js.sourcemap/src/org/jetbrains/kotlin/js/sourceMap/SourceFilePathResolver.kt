@@ -10,10 +10,17 @@ import org.jetbrains.kotlin.js.config.JsConfig
 import java.io.File
 import java.io.IOException
 
-class SourceFilePathResolver(sourceRoots: List<File>, outputDir: File? = null) {
+class SourceFilePathResolver(
+    sourceRoots: List<File>,
+    outputDir: File? = null,
+    forcedModules: List<String> = emptyList(),
+) {
     private val sourceRoots = sourceRoots.mapTo(mutableSetOf<File>()) { it.absoluteFile }
     private val outputDirPathResolver = outputDir?.let(::RelativePathCalculator)
     private val cache = mutableMapOf<File, String>()
+    private val modulesAndTheirSourcesStatus = hashMapOf<String, Boolean>().apply {
+        forcedModules.forEach { put(it, true) }
+    }
 
     @Throws(IOException::class)
     fun getPathRelativeToSourceRoots(file: File): String {
@@ -23,6 +30,20 @@ class SourceFilePathResolver(sourceRoots: List<File>, outputDir: File? = null) {
             cache[file] = path
         }
         return path
+    }
+
+    @Throws(IOException::class)
+    fun getPathRelativeToSourceRootsIfExists(moduleId: String, file: File): String? {
+        var moduleHasSources = modulesAndTheirSourcesStatus[moduleId]
+
+        if (moduleHasSources == null) {
+            moduleHasSources = file.exists()
+            modulesAndTheirSourcesStatus[moduleId] = moduleHasSources
+        }
+
+        if (moduleHasSources == false) return null
+
+        return getPathRelativeToSourceRoots(file)
     }
 
     @Throws(IOException::class)
@@ -61,11 +82,17 @@ class SourceFilePathResolver(sourceRoots: List<File>, outputDir: File? = null) {
         )
 
         @JvmStatic
-        fun create(sourceRoots: List<String>, sourceMapPrefix: String, outputDir: File?): SourceFilePathResolver {
+        fun create(
+            sourceRoots: List<String>,
+            sourceMapPrefix: String,
+            outputDir: File?,
+            forcedModules: List<String> = emptyList(),
+        ): SourceFilePathResolver {
             val generateRelativePathsInSourceMap = sourceMapPrefix.isEmpty() && sourceRoots.isEmpty()
             return SourceFilePathResolver(
                 sourceRoots.map(::File),
-                outputDir.takeIf { generateRelativePathsInSourceMap }
+                outputDir.takeIf { generateRelativePathsInSourceMap },
+                forcedModules
             )
         }
     }

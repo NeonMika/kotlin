@@ -93,11 +93,16 @@ abstract class WasmEnvironmentConfigurator(testServices: TestServices) : Environ
         val sourceDirs = module.files.map { it.originalFile.parent }.distinct()
         configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceDirs)
         configuration.put(JSConfigurationKeys.SOURCE_MAP, true)
+        configuration.put(
+            JSConfigurationKeys.SOURCE_MAP_FORCED_MODULES,
+            registeredDirectives[WasmEnvironmentConfigurationDirectives.SOURCE_MAP_FORCED_MODULES]
+        )
 
         val sourceMapSourceEmbedding = registeredDirectives[SOURCE_MAP_EMBED_SOURCES].singleOrNull() ?: SourceMapSourceEmbedding.NEVER
         configuration.put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapSourceEmbedding)
 
         configuration.put(WasmConfigurationKeys.WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS, DISABLE_WASM_EXCEPTION_HANDLING in registeredDirectives)
         configuration.put(WasmConfigurationKeys.WASM_USE_NEW_EXCEPTION_PROPOSAL, USE_NEW_EXCEPTION_HANDLING_PROPOSAL in registeredDirectives)
+
     }
 }

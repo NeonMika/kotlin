@@ -44,6 +44,11 @@ object WasmEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
+    val SOURCE_MAP_FORCED_MODULES by stringDirective(
+        description = "list of modules for which we should generate mappings even if there is no physical files inside",
+        applicability = DirectiveApplicability.Global
+    )
+
     val RUN_THIRD_PARTY_OPTIMIZER by directive(
         description = "Also run third-party optimizer (for now, only binaryen is supported) after the main compilation",
     )

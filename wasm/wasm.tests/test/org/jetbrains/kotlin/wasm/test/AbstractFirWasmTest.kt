@@ -132,6 +132,9 @@ open class AbstractFirWasmJsSteppingTest : AbstractFirWasmJsTest(
         commonConfigurationForWasmBlackBoxCodegenTest()
         defaultDirectives {
             +WasmEnvironmentConfigurationDirectives.GENERATE_SOURCE_MAP
+            // At this point we don't have any information about modules used inside our stepping tests, so, they are hardcoded here
+            // TODO: Discuss a better option to remove such a hardcoded list
+            WasmEnvironmentConfigurationDirectives.SOURCE_MAP_FORCED_MODULES with listOf("<main>", "<lib>")
         }
     }
 }
