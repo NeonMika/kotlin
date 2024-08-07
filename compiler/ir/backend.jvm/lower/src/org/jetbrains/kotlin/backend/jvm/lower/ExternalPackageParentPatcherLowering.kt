@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.phaser.PhaseDescription
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.createJvmFileFacadeClass
+import org.jetbrains.kotlin.backend.jvm.ir.parentClassId
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.load.kotlin.FacadeClassSource
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 @PhaseDescription(
     name = "ExternalPackageParentPatcherLowering",
@@ -50,10 +52,15 @@ internal class ExternalPackageParentPatcherLowering(val context: JvmBackendConte
 
         private fun generateOrGetFacadeClass(declaration: IrMemberWithContainerSource): IrClass? {
             val deserializedSource = declaration.containerSource ?: return null
-            if (deserializedSource !is FacadeClassSource) return null
-            val facadeName = deserializedSource.facadeClassName ?: deserializedSource.className
+            val (facadeName, origin) = when (deserializedSource) {
+                is FacadeClassSource -> {
+                    if (deserializedSource.facadeClassName != null) deserializedSource.facadeClassName!! to IrDeclarationOrigin.JVM_MULTIFILE_CLASS
+                    else deserializedSource.className to IrDeclarationOrigin.FILE_CLASS
+                }
+                else -> JvmClassName.byInternalName("LibCommonKt") to IrDeclarationOrigin.JVM_MULTIFILE_CLASS
+            }
             return createJvmFileFacadeClass(
-                if (deserializedSource.facadeClassName != null) IrDeclarationOrigin.JVM_MULTIFILE_CLASS else IrDeclarationOrigin.FILE_CLASS,
+                origin,
                 facadeName.fqNameForTopLevelClassMaybeWithDollars.shortName(),
                 deserializedSource,
                 deserializeIr = { irClass -> deserializeTopLevelClass(irClass) }
