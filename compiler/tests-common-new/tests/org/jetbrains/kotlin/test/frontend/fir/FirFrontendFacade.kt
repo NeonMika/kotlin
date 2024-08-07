@@ -452,16 +452,16 @@ open class FirFrontendFacade(
                     targetPlatform.isCommon() || targetPlatform.isJvm() -> {
                         dependencies(configuration.jvmModularRoots.map { it.toPath() })
                         val moduleSpecificPaths = mutableSetOf<Path>()
-                        for (module in modules) {
-                            configuration.getMap<TestModule, List<ContentRoot>>(JvmEnvironmentConfigurator.TEST_MODULE_TO_CONTENT_ROOTS_KEY)[module]?.let { moduleDepsRoots ->
-//                                val md =
-//                                    if (module == mainModule) binaryModuleData.regular
-//                                    else testServices.firModuleInfoProvider.getCorrespondingModuleData(module)
-                                val depsPaths = moduleDepsRoots.filterIsInstance<JvmClasspathRoot>().map { it.file.toPath() }
-//                                dependencies(md, depsPaths)
-                                moduleSpecificPaths.addAll(depsPaths)
-                            }
-                        }
+//                        for (module in modules) {
+//                            configuration.getMap<TestModule, List<ContentRoot>>(JvmEnvironmentConfigurator.TEST_MODULE_TO_CONTENT_ROOTS_KEY)[module]?.let { moduleDepsRoots ->
+////                                val md =
+////                                    if (module == mainModule) binaryModuleData.regular
+////                                    else testServices.firModuleInfoProvider.getCorrespondingModuleData(module)
+//                                val depsPaths = moduleDepsRoots.filterIsInstance<JvmClasspathRoot>().map { it.file.toPath() }
+////                                dependencies(md, depsPaths)
+//                                moduleSpecificPaths.addAll(depsPaths)
+//                            }
+//                        }
                         dependencies(configuration.jvmClasspathRoots.map { it.toPath() }.filter { it !in moduleSpecificPaths })
                         friendDependencies(configuration[JVMConfigurationKeys.FRIEND_PATHS] ?: emptyList())
                     }
