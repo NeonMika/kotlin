@@ -34,7 +34,7 @@ internal fun ObjectFactory.KotlinNativeLibraryGenerationRunner(
 
 private fun ObjectFactory.kotlinToolSpec(
     useXcodeMessageStyle: Provider<Boolean>,
-    classpath: FileCollection,//nativeCompilerClasspath(nativeProperties.kotlinNativeCompilerJar, nativeProperties.actualNativeHomeDirectory),
+    classpath: FileCollection,
     jvmArgs: ListProperty<String>,//nativeProperties.jvmArgs
     environmentBlacklist: Provider<Set<String>>,
 ) = KotlinNativeToolRunner.ToolSpec(
@@ -50,36 +50,3 @@ private fun ObjectFactory.kotlinToolSpec(
     environmentBlacklist = environmentBlacklist.get(),
 ).enableAssertions()
     .configureDefaultMaxHeapSize()
-
-//private fun Provider<Boolean>.daemonEntryPoint() = map { useXcodeMessageStyle ->
-//    if (useXcodeMessageStyle) "daemonMainWithXcodeRenderer" else "daemonMain"
-//}
-//
-//private val NativeProperties.kotlinNativeCompilerJar: Provider<File>
-//    get() = isUseEmbeddableCompilerJar.zip(actualNativeHomeDirectory) { useJar, nativeHomeDir ->
-//        if (useJar) {
-//            nativeHomeDir.resolve("konan/lib/kotlin-native-compiler-embeddable.jar")
-//        } else {
-//            nativeHomeDir.resolve("konan/lib/kotlin-native.jar")
-//        }
-//    }
-//
-//private fun ObjectFactory.nativeCompilerClasspath(
-//    nativeProperties: NativeProperties
-//) = fileCollection().from(
-//    nativeProperties.kotlinNativeCompilerJar,
-//    nativeProperties.actualNativeHomeDirectory.map { it.resolve("konan/lib/trove4j.jar") },
-//)
-//
-//private fun execSystemProperties(
-//    useXcodeMessageStyle: Provider<Boolean>
-//) = useXcodeMessageStyle.map {
-//    val messageRenderer = if (it) MessageRenderer.XCODE_STYLE else MessageRenderer.GRADLE_STYLE
-//    mapOf(MessageRenderer.PROPERTY_KEY to messageRenderer.name)
-//}.get()
-//
-//private val execLLVMEnvironment by lazy {
-//    mutableMapOf<String, String>(
-//        "LIBCLANG_DISABLE_CRASH_RECOVERY" to "1"
-//    )
-//}
