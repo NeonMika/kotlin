@@ -63,6 +63,7 @@ public external fun disposeExternalRCRef(ref: ExternalRCRef)
  */
 @InternalForKotlinNative
 @GCUnsafeCall("Kotlin_native_internal_ref_dereferenceExternalRCRef")
+@Escapes(0b10) // The return value is stored in a global.
 public external fun dereferenceExternalRCRef(ref: ExternalRCRef): Any
 
 /**

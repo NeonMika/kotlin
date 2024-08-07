@@ -624,6 +624,7 @@ public inline fun <T> arrayOfNulls(size: Int): Array<T?> =
 public external inline fun <T> arrayOf(vararg elements: T): Array<T>
 
 @GCUnsafeCall("Kotlin_emptyArray")
+@Escapes(0b1) // The return value is stored in a global.
 public external fun <T> emptyArray(): Array<T>
 
 /**

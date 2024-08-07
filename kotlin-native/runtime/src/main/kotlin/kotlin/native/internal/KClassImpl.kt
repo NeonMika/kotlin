@@ -63,6 +63,7 @@ internal class KClassUnsupportedImpl(private val message: String) : KClass<Any> 
 }
 
 @GCUnsafeCall("Kotlin_TypeInfo_findAssociatedObject")
+@Escapes(0b100) // The return value is stored in a global.
 private external fun findAssociatedObjectImpl(typeInfo: NativePtr, key: NativePtr): Any?
 
 @ExportForCompiler

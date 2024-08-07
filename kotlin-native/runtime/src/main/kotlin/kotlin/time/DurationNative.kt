@@ -6,8 +6,10 @@
 package kotlin.time
 
 import kotlin.native.internal.GCUnsafeCall
+import kotlin.native.internal.escapeAnalysis.Escapes
 
 internal actual inline val durationAssertionsEnabled: Boolean get() = true
 
 @GCUnsafeCall("Kotlin_DurationValue_formatToExactDecimals")
+@Escapes(0b100) // The return value is explicitly allocated on the heap.
 internal actual external fun formatToExactDecimals(value: Double, decimals: Int): String

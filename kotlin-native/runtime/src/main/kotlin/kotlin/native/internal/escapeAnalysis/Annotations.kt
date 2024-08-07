@@ -17,8 +17,9 @@ package kotlin.native.internal.escapeAnalysis
  * To mark escaping parameters use [Escapes] or [Escapes.Nothing] annotations.
  * To mark relationships between parameters use [PointsTo] annotation.
  *
- * Every `external fun` in the stdlib with object parameters/receivers must be marked either by [Escapes], [Escapes.Nothing] or [PointsTo].
- * Except functions defined in `kotlinx.cinterop`, `kotlin.concurrent`, `kotlin.native.concurrent` (the list may change in the future)
+ * Every `external fun` in the stdlib with object parameters/receivers or object return value must be marked either by
+ * [Escapes], [Escapes.Nothing] or [PointsTo].
+ * Some functions don't have to be marked, the compiler will check for both missing and unused annotations.
  *
  * For more details, see `EscapeAnalysis.kt` in the compiler sources.
  */
@@ -29,21 +30,22 @@ private object EscapeAnalysisAnnotations // A hack to have a place for file-leve
  *
  * ```
  * class C {
- *     @Escapes(0b0101)
+ *     @Escapes(0b10101)
  *     external fun Array<Any>.f(p0: Any, p1: Any): Any
  * }
  * ```
- * In this example `f` has 2 parameters and 2 receivers. The bitmask `0b0101` is deciphered as follows:
+ * In this example `f` has 2 parameters, 2 receivers and 1 return value. The bitmask `0b10101` is deciphered as follows:
  * ```
- * 0b0  1  0  1
- *   ^  ^  ^  ^
- *   |  |  |  |
- *   |  |  |  this@C
- *   p1 p0 this@Array<Any>
+ * 0b1  0  1  0  1
+ *   ^  ^  ^  ^  ^
+ *   |  |  |  |  |
+ *   |  |  |  |  this@C
+ *   |  p1 p0 this@Array<Any>
+ *   return value
  * ```
- * So, the dispatch receiver `this@C` and `p0` escape, the extension receiver `this@Array<Any>` and `p1` do not.
+ * So, the dispatch receiver `this@C`, `p0` and the return value escape, the extension receiver `this@Array<Any>` and `p1` do not.
  *
- * @param who bitmask of parameters/receivers where set bits indicate escaping
+ * @param who bitmask of parameters/receivers + the return value where set bits indicate escaping
  * @see Escapes.Nothing
  * @see EscapeAnalysisAnnotations
  */
@@ -68,11 +70,12 @@ internal annotation class Escapes(val who: Int) {
  * Specifies how parameters/receivers and the return value of the `external fun` point to each other (see [EscapeAnalysisAnnotations] for details).
  *
  * There are 4 kinds of `p1` pointing to `p2`:
- * 1. `p1 -> p2`
- * 2. `p1 -> p2.intestines`
- * 3. `p1.intestines -> p2`
- * 4. `p1.intestines -> p2.intestines`
- * Where `intestines` is typically used with arrays to mean "elements of the array".
+ * 1. `p1 -> p2` (i.e. `p1` is `p2`)
+ * 2. `p1 -> p2.intestines` (i.e. `p1` is an element of `p2`)
+ * 3. `p1.intestines -> p2` (i.e. some element of `p1` is `p2`)
+ * 4. `p1.intestines -> p2.intestines` (i.e. some element of `p1` is an element of `p2`)
+ *
+ * `intestines` is typically used with arrays to mean "elements of the array".
  *
  * [onWhom] will contain the list of lists of nibbles, where each nibble is a kind (and so has value 0-4).
  * The order in both the external and internal lists are: dispatch receiver, extension receiver, parameters, return value.

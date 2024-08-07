@@ -616,16 +616,11 @@ private class BackendChecker(
 
     }
 
-    private val dfgHandledSymbols: List<IrSymbol> by lazy {
-        buildList {
+    private val IrSymbol.handledByDFG: Boolean
+        get() = this in with(symbols) {
             // From DFGBuilder.kt
-            with(symbols) {
-                add(createUninitializedInstance)
-                add(reinterpret)
-                add(initInstance)
-            }
+            listOf(createUninitializedInstance, reinterpret, initInstance)
         }
-    }
 
     private val IntrinsicType.mustBeLowered: Boolean
         get() = when (this) {
@@ -661,41 +656,40 @@ private class BackendChecker(
                 && !startsWith(kotlinPackageFqn.child(Name.identifier("native")).child(Name.identifier("concurrent")))
 
     private fun checkEscapeAnalysisAnnotations(declaration: IrFunction) {
-        fun IrFunction.isLoweredIntrinsic() = tryGetIntrinsicType(this)?.mustBeLowered == true
-        val isSupportedDeclaration = declaration.isExternal
-                && declaration.parent.fqNameForIrSerialization.isSupportedPackageByEA
-                && declaration.symbol !in dfgHandledSymbols
-                && !declaration.isLoweredIntrinsic()
         val hasEscapes = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.Escapes)
         val escapesName = NativeRuntimeNames.Annotations.Escapes.asFqNameString()
         val hasEscapesNothing = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.EscapesNothing)
         val escapesNothingName = NativeRuntimeNames.Annotations.EscapesNothing.asFqNameString()
         val hasPointsTo = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.PointsTo)
         val pointsToName = NativeRuntimeNames.Annotations.PointsTo.asFqNameString()
-        if (!isSupportedDeclaration) {
+
+        fun warnUnusedIf(condition: Boolean, message: () -> String): Any? {
+            if (!condition)
+                return Unit
             if (hasEscapes) {
-                reportWarning(declaration, "Unneeded @$escapesName on a non-runtime function")
+                reportWarning(declaration, "Unused @$escapesName: $message")
             }
             if (hasEscapesNothing) {
-                reportWarning(declaration, "Unneeded @$escapesNothingName on a non-runtime function")
+                reportWarning(declaration, "Unused @$escapesNothingName: $message")
             }
             if (hasPointsTo) {
-                reportWarning(declaration, "Unneeded @$pointsToName on a non-runtime function")
+                reportWarning(declaration, "Unused @$pointsToName: $message")
             }
-            return
+            // condition satisfied, potential unused warning emitted, no need to go on with other checks
+            return null
         }
-        if (declaration.allParameters.all { it.type.computeBinaryType() is BinaryType.Primitive }) {
-            if (hasEscapes) {
-                reportWarning(declaration, "Unneeded @$escapesName on a function without reference parameters")
-            }
-            if (hasEscapesNothing) {
-                reportWarning(declaration, "Unneeded @$escapesNothingName on a function without reference parameters")
-            }
-            if (hasPointsTo && declaration.returnType.computeBinaryType() is BinaryType.Primitive) {
-                reportWarning(declaration, "Unneeded @$pointsToName on a function without reference parameters or reference return value")
-            }
-            return
-        }
+
+        warnUnusedIf(!declaration.isExternal) { "non-external function" } ?: return
+        warnUnusedIf(!declaration.parent.fqNameForIrSerialization.isSupportedPackageByEA) { "package outside EA annotation checks" } ?: return
+        warnUnusedIf(declaration.symbol.handledByDFG) { "function handled manually in DFGBuilder" } ?: return
+        fun IrFunction.isLoweredIntrinsic() = tryGetIntrinsicType(this)?.mustBeLowered == true
+        warnUnusedIf(declaration.isLoweredIntrinsic()) { "function is lowered in the compiler" } ?: return
+        fun IrType.canSkipEAAnnotation() = isUnit() || isNothing() || computeBinaryType() is BinaryType.Primitive
+        fun IrFunction.canSkipEAAnnotation() = allParameters.all { it.type.canSkipEAAnnotation() } && returnType.canSkipEAAnnotation()
+        warnUnusedIf(declaration.canSkipEAAnnotation()) { "function has neither reference parameters nor a reference return value" } ?: return
+
+        // All the unused checks have passed.
+        // This also means, that we now know the declaration is external, in the correct package and so on.
         if (hasEscapes && hasEscapesNothing) {
             reportNonFatalError(declaration, "Conflicting @$escapesName and @$escapesNothingName")
         }
