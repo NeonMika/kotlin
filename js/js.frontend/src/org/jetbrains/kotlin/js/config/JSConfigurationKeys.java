@@ -41,9 +41,6 @@ public class JSConfigurationKeys {
     public static final CompilerConfigurationKey<SourceMapNamesPolicy> SOURCEMAP_NAMES_POLICY = CompilerConfigurationKey.create(
             "a policy to generate a mapping from generated identifiers to their corresponding original names");
 
-    public static final CompilerConfigurationKey<Boolean> SOURCE_MAP_INCLUDE_KLIB_FILES = CompilerConfigurationKey.create(
-            "list of modules for which we should generate mappings even if there is no physical files inside");
-
     public static final CompilerConfigurationKey<Boolean> META_INFO =
             CompilerConfigurationKey.create("generate .meta.js and .kjsm files");
 

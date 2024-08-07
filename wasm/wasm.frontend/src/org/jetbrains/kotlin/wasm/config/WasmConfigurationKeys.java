@@ -26,4 +26,8 @@ public class WasmConfigurationKeys {
 
     public static final CompilerConfigurationKey<Boolean> WASM_USE_NEW_EXCEPTION_PROPOSAL =
             CompilerConfigurationKey.create("use wasm new exception proposal");
+
+    public static final CompilerConfigurationKey<Boolean> WASM_SOURCE_MAP_INCLUDE_KLIB_FILES = CompilerConfigurationKey.create(
+            "insert mappings from third-party KLIBs into the generated source map even if the source is unavailable on the end-user machine");
+
 }

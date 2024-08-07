@@ -94,7 +94,7 @@ abstract class WasmEnvironmentConfigurator(testServices: TestServices) : Environ
         val sourceDirs = module.files.map { it.originalFile.parent }.distinct()
         configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceDirs)
         configuration.put(JSConfigurationKeys.SOURCE_MAP, true)
-        configuration.put(JSConfigurationKeys.SOURCE_MAP_INCLUDE_KLIB_FILES, SOURCE_MAP_INCLUDE_KLIB_FILES in registeredDirectives)
+        configuration.put(WasmConfigurationKeys.WASM_SOURCE_MAP_INCLUDE_KLIB_FILES, SOURCE_MAP_INCLUDE_KLIB_FILES in registeredDirectives)
 
         val sourceMapSourceEmbedding = registeredDirectives[SOURCE_MAP_EMBED_SOURCES].singleOrNull() ?: SourceMapSourceEmbedding.NEVER
         configuration.put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapSourceEmbedding)

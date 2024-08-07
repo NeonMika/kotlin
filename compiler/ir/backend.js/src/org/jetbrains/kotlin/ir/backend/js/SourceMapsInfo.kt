@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.SourceMapNamesPolicy
 import org.jetbrains.kotlin.js.config.SourceMapSourceEmbedding
+import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
 import java.io.File
 
 data class SourceMapsInfo(
@@ -28,7 +29,7 @@ data class SourceMapsInfo(
                     configuration.get(JSConfigurationKeys.OUTPUT_DIR),
                     configuration.get(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, SourceMapSourceEmbedding.INLINING),
                     configuration.get(JSConfigurationKeys.SOURCEMAP_NAMES_POLICY, SourceMapNamesPolicy.SIMPLE_NAMES),
-                    configuration.get(JSConfigurationKeys.SOURCE_MAP_INCLUDE_KLIB_FILES, false)
+                    configuration.get(WasmConfigurationKeys.WASM_SOURCE_MAP_INCLUDE_KLIB_FILES, false)
                 )
             } else {
                 null
