@@ -35,38 +35,37 @@ import org.jetbrains.kotlin.utils.addToStdlib.getOrSetIfNull
 internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
 internal var IrSimpleFunction.constructor: IrConstructor? by irAttribute(followAttributeOwner = false)
 
-internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction = synchronized(irConstructor) {
-    irConstructor::constructorImplFunction.getOrSetIfNull {
-        irFactory.buildFun {
-            name = irConstructor.name
-            startOffset = irConstructor.startOffset
-            endOffset = irConstructor.endOffset
-            visibility = irConstructor.visibility
-            isExternal = irConstructor.isExternal
-            returnType = irBuiltIns.unitType
-        }.apply {
-            val function = this
-            val parentClass = irConstructor.parentAsClass
-            parent = parentClass
-            constructor = irConstructor
+internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction =
+        irConstructor::constructorImplFunction.getOrSetIfNull {
+            irFactory.buildFun {
+                name = irConstructor.name
+                startOffset = irConstructor.startOffset
+                endOffset = irConstructor.endOffset
+                visibility = irConstructor.visibility
+                isExternal = irConstructor.isExternal
+                returnType = irBuiltIns.unitType
+            }.apply {
+                val function = this
+                val parentClass = irConstructor.parentAsClass
+                parent = parentClass
+                constructor = irConstructor
 
-            addDispatchReceiver {
-                startOffset = parentClass.startOffset
-                endOffset = parentClass.startOffset
-                type = parentClass.defaultType
+                addDispatchReceiver {
+                    startOffset = parentClass.startOffset
+                    endOffset = parentClass.startOffset
+                    type = parentClass.defaultType
+                }
+
+                require(irConstructor.extensionReceiverParameter == null) { "A constructor with an extension receiver: ${irConstructor.render()}" }
+                irConstructor.dispatchReceiverParameter?.let { outerReceiverParameter ->
+                    addExtensionReceiver(outerReceiverParameter.type)
+                }
+
+                valueParameters = irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
+
+                annotations = irConstructor.annotations
             }
-
-            require(irConstructor.extensionReceiverParameter == null) { "A constructor with an extension receiver: ${irConstructor.render()}" }
-            irConstructor.dispatchReceiverParameter?.let { outerReceiverParameter ->
-                addExtensionReceiver(outerReceiverParameter.type)
-            }
-
-            valueParameters = irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
-
-            annotations = irConstructor.annotations
         }
-    }
-}
 
 internal val LOWERED_DELEGATING_CONSTRUCTOR_CALL by IrStatementOriginImpl
 
