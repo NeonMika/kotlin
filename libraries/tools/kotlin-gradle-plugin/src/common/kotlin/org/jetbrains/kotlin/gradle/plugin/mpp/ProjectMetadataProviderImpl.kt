@@ -7,25 +7,20 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.gradle.api.file.FileCollection
-import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.awaitMetadataTarget
+import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
+import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle.Stage.AfterEvaluateBuildscript
-import org.jetbrains.kotlin.gradle.plugin.KotlinProjectSetupAction
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.await
-import org.jetbrains.kotlin.gradle.plugin.launch
 import org.jetbrains.kotlin.gradle.plugin.mpp.MetadataDependencyResolution.ChooseVisibleSourceSets.MetadataProvider.ProjectMetadataProvider
-import org.jetbrains.kotlin.gradle.plugin.usageByName
 import org.jetbrains.kotlin.gradle.targets.metadata.awaitMetadataCompilationsCreated
 import org.jetbrains.kotlin.gradle.targets.metadata.locateOrRegisterGenerateProjectStructureMetadataTask
 import org.jetbrains.kotlin.gradle.utils.setAttribute
 
 private typealias SourceSetName = String
-
-//internal val sourceSetsMetadataAttribute =
-//    Attribute.of("org.jetbrains.kotlin.kmp.internal.sourceSetsMetadata", Boolean::class.javaObjectType)
 
 internal fun ProjectMetadataProvider(
     sourceSetMetadataOutputs: Map<SourceSetName, SourceSetMetadataOutputs>,
@@ -93,6 +88,7 @@ private fun Configuration.addSecondaryOutgoingVariant(project: Project) {
 
         val generateProjectStructureMetadataTaskProvider = project.locateOrRegisterGenerateProjectStructureMetadataTask()
         apiClassesVariant.artifact(generateProjectStructureMetadataTaskProvider.flatMap { it.sourceSetMetadataOutputsFile }) { configureAction ->
+            configureAction.classifier = "source-sets-metadata"
             configureAction.builtBy(generateProjectStructureMetadataTaskProvider)
             metadataCompilations.forEach { compilation ->
                 configureAction.builtBy(compilation.output.classesDirs.buildDependencies)

@@ -21,12 +21,12 @@ object KotlinUsages {
     const val KOTLIN_RUNTIME = "kotlin-runtime"
     const val KOTLIN_METADATA = "kotlin-metadata"
 
-    // This type is required to distinguish metadata jar configuration from psm configuration.
+    // This type is required to distinguish metadata jar configuration from a psm secondary variant.
     // At the same time, disambiguation and compatibility rules should count them as equivalent
     // to be possible to apply a transform actions chain to `kotlin-metadata` artifact to get psm.
     const val KOTLIN_PSM_METADATA = "kotlin-psm-metadata"
 
-    /** unzipped */
+    // This type is required to distinguish metadata jar configuration from a source sets secondary variant.
     const val KOTLIN_LOCAL_METADATA = "kotlin-local-metadata"
 
     /**

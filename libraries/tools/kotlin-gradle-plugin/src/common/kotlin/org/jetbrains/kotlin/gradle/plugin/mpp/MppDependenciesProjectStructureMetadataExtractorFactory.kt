@@ -78,7 +78,6 @@ private constructor(
             }
         } else {
             if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
-                // org.jetbrains.kotlin.gradle.HierarchicalMppIT.`test disable default publications`
                 getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(resolvedMetadataConfiguration, moduleId)
             } else {
                 JarMppDependencyProjectStructureMetadataExtractor(metadataArtifact.file)
