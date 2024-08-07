@@ -7,13 +7,10 @@ package org.jetbrains.kotlin.gradle.targets.native
 
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractNativeLibrary
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.isMetadataUsage
-import org.jetbrains.kotlin.gradle.plugin.mpp.sourceSetsMetadataAttribute
 import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.targets.KotlinTargetSideEffect
 import org.jetbrains.kotlin.gradle.utils.maybeCreateResolvable
@@ -28,11 +25,6 @@ internal val ConfigureFrameworkExportSideEffect = KotlinTargetSideEffect<KotlinN
             isTransitive = false
             usesPlatformOf(target)
             attributes.setAttribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
-            if (project.kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled
-                && isMetadataUsage(target.platformType, target.project)
-            ) {
-                setAttribute(sourceSetsMetadataAttribute, false)
-            }
             attributes.setAttribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
             description = "Dependencies to be exported in framework ${framework.name} for target ${target.targetName}"
         }

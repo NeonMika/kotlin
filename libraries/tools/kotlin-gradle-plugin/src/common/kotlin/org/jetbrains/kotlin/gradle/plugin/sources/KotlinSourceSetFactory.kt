@@ -11,10 +11,8 @@ import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
-import org.jetbrains.kotlin.gradle.plugin.mpp.sourceSetsMetadataAttribute
 import org.jetbrains.kotlin.gradle.plugin.usageByName
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 import org.jetbrains.kotlin.gradle.utils.maybeCreateDependencyScope
@@ -108,11 +106,6 @@ internal class DefaultKotlinSourceSetFactory(
 
                 if (project.isKotlinGranularMetadataEnabled) {
                     setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
-                    if (project.kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled) {
-                        // We want to resolve the main variant,
-                        // not the secondary variant of metadata api configuration, which contains `json` artifact
-                        setAttribute(sourceSetsMetadataAttribute, false)
-                    }
                 }
             }
         }

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
 import org.gradle.api.file.FileCollection
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle.Stage.AfterEvaluateBuildscript
@@ -16,14 +17,15 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.await
 import org.jetbrains.kotlin.gradle.plugin.launch
 import org.jetbrains.kotlin.gradle.plugin.mpp.MetadataDependencyResolution.ChooseVisibleSourceSets.MetadataProvider.ProjectMetadataProvider
+import org.jetbrains.kotlin.gradle.plugin.usageByName
 import org.jetbrains.kotlin.gradle.targets.metadata.awaitMetadataCompilationsCreated
 import org.jetbrains.kotlin.gradle.targets.metadata.locateOrRegisterGenerateProjectStructureMetadataTask
 import org.jetbrains.kotlin.gradle.utils.setAttribute
 
 private typealias SourceSetName = String
 
-internal val sourceSetsMetadataAttribute =
-    Attribute.of("org.jetbrains.kotlin.kmp.internal.sourceSetsMetadata", Boolean::class.javaObjectType)
+//internal val sourceSetsMetadataAttribute =
+//    Attribute.of("org.jetbrains.kotlin.kmp.internal.sourceSetsMetadata", Boolean::class.javaObjectType)
 
 internal fun ProjectMetadataProvider(
     sourceSetMetadataOutputs: Map<SourceSetName, SourceSetMetadataOutputs>,
@@ -84,7 +86,7 @@ private fun Configuration.addSecondaryOutgoingVariant(project: Project) {
 
     val apiClassesVariant = outgoing.variants.maybeCreate("sourceSetsSecondaryVariant")
 
-    apiClassesVariant.attributes.setAttribute(sourceSetsMetadataAttribute, true)
+    apiClassesVariant.attributes.setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_LOCAL_METADATA))
 
     project.launch {
         val metadataCompilations = project.multiplatformExtension.kotlinMetadataCompilations()

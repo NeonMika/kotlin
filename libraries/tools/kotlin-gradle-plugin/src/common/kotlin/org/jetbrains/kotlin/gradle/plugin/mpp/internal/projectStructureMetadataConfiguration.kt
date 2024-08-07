@@ -6,7 +6,6 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.internal
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.gradle.api.file.FileCollection
 import org.jetbrains.kotlin.gradle.dsl.awaitMetadataTarget
@@ -16,25 +15,24 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPro
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.configureMetadataDependenciesAttribute
 import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
-import org.jetbrains.kotlin.gradle.plugin.mpp.sourceSetsMetadataAttribute
 import org.jetbrains.kotlin.gradle.plugin.sources.InternalKotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.sources.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.metadata.locateOrRegisterGenerateProjectStructureMetadataTask
 import org.jetbrains.kotlin.gradle.utils.*
 
-internal val psmAttribute = Attribute.of("org.jetbrains.kotlin.projectStructureMetadata", Boolean::class.javaObjectType)
+//internal val psmAttribute = Attribute.of("org.jetbrains.kotlin.projectStructureMetadata", Boolean::class.javaObjectType)
 
 /**
  * This Setup Action is required for creating psm configuration for non-KMP projects.
  * In fact, it only creates PSM consumable-configuration for the current project that can be consumed by another KMP project
  */
 internal val ProjectStructureMetadataForJVMSetupAction = KotlinProjectSetupAction {
-    maybeCreatePsmConsumableConfiguration(project)
+    // maybeCreatePsmConsumableConfiguration(project)
 }
 
 internal val ProjectStructureMetadataForKMPSetupAction = KotlinProjectSetupAction {
     project.setupProjectStructureMetadataOutgoingArtifacts()
-    project.dependencies.attributesSchema.attribute(psmAttribute)
+//    project.dependencies.attributesSchema.attribute(psmAttribute)
     setupTransformActionFromJarToPsm(project)
 }
 
@@ -47,27 +45,35 @@ internal val ProjectStructureMetadataForKMPSetupAction = KotlinProjectSetupActio
  */
 internal fun Project.setupProjectStructureMetadataOutgoingArtifacts() {
     val project = this
-    val psmConsumableConfiguration = maybeCreatePsmConsumableConfiguration(project)
+    // val psmConsumableConfiguration = maybeCreatePsmConsumableConfiguration(project)
     // KMP projects only have a project-structure-metadata and a metadata target,
     // but we still need to set up psm attribute for successful dependency resolution.
     val generateProjectStructureMetadata = project.locateOrRegisterGenerateProjectStructureMetadataTask()
 
-    // We need it for wiring psm generation task's output with the outgoing artifact
-    project.artifacts.add(
-        psmConsumableConfiguration.name,
-        generateProjectStructureMetadata.map { task -> task.resultFile }
-    ) {
-        it.builtBy(generateProjectStructureMetadata)
-    }
+//    // We need it for wiring psm generation task's output with the outgoing artifact
+//    project.artifacts.add(
+//        psmConsumableConfiguration.name,
+//        generateProjectStructureMetadata.map { task -> task.resultFile }
+//    ) {
+//        it.builtBy(generateProjectStructureMetadata)
+//    }
 
     project.launch {
         val metadataTarget = project.multiplatformExtension.awaitMetadataTarget()
+        val apiElements = project.configurations.getByName(metadataTarget.apiElementsConfigurationName)
 
-        // Some transitive dependencies could contain links to submodules as well, thus we are wiring them here
-        psmConsumableConfiguration.copyDependenciesLazy(
-            project,
-            project.configurations.getByName(metadataTarget.apiElementsConfigurationName)
-        )
+        apiElements.outgoing.variants.maybeCreate("projectStructureMetadata").apply {
+            artifact(generateProjectStructureMetadata.map { task -> task.resultFile }) {
+                it.builtBy(generateProjectStructureMetadata)
+            }
+            setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_PSM_METADATA))
+        }
+
+//        // Some transitive dependencies could contain links to submodules as well, thus we are wiring them here
+//        psmConsumableConfiguration.copyDependenciesLazy(
+//            project,
+//            project.configurations.getByName(metadataTarget.apiElementsConfigurationName)
+//        )
     }
 }
 
@@ -90,19 +96,16 @@ internal fun resolvableMetadataConfigurationForEachSourSet(project: Project): Li
     }
 }
 
-private fun maybeCreatePsmConsumableConfiguration(project: Project): Configuration {
-    return project.configurations.maybeCreateConsumable(PSM_CONSUMABLE_CONFIGURATION_NAME) {
-        configurePsmResolvableAttributes(project)
-    }
-}
+//private fun maybeCreatePsmConsumableConfiguration(project: Project): Configuration {
+//    return project.configurations.maybeCreateConsumable(PSM_CONSUMABLE_CONFIGURATION_NAME) {
+//        configurePsmResolvableAttributes(project)
+//    }
+//}
 
 private fun Configuration.configurePsmResolvableAttributes(project: Project) {
-    setAttribute(psmAttribute, true)
+//    setAttribute(psmAttribute, true)
     this.configureMetadataDependenciesAttribute(project)
     setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_PSM_METADATA))
-    // metadataApiElements configuration produces multiple secondary variants,
-    // but for the transformation chain we need only the original jar.
-    setAttribute(sourceSetsMetadataAttribute, false)
 }
 
 private val InternalKotlinSourceSet.projectStructureMetadataConfigurationName: String
@@ -110,12 +113,12 @@ private val InternalKotlinSourceSet.projectStructureMetadataConfigurationName: S
 
 
 private fun setupTransformActionFromJarToPsm(project: Project) {
-    project.dependencies.artifactTypes.maybeCreate("jar").also { artifactType ->
-        artifactType.attributes.setAttribute(psmAttribute, false)
-    }
+//    project.dependencies.artifactTypes.maybeCreate("jar").also { artifactType ->
+//        artifactType.attributes.setAttribute(psmAttribute, false)
+//    }
 
     project.dependencies.registerTransform(ProjectStructureMetadataTransformAction::class.java) { transform ->
-        transform.from.setAttribute(psmAttribute, false)
-        transform.to.setAttribute(psmAttribute, true)
+        transform.from.setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
+        transform.to.setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_PSM_METADATA))
     }
 }

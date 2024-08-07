@@ -172,11 +172,6 @@ private fun KotlinCompilationDependencyConfigurationsContainer(
             usesPlatformOf(target)
             isVisible = false
             attributes.setAttribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
-            if(target.project.kotlinPropertiesProvider.kotlinKmpProjectIsolationEnabled
-                && isMetadataUsage(target.platformType, target.project)) {
-                setAttribute(sourceSetsMetadataAttribute, false)
-            }
-
             if (target.platformType != KotlinPlatformType.androidJvm) {
                 attributes.setAttribute(Category.CATEGORY_ATTRIBUTE, target.project.categoryByName(Category.LIBRARY))
             }
@@ -206,7 +201,6 @@ private fun KotlinCompilationDependencyConfigurationsContainer(
                 dest = this
             )
             setAttribute(Usage.USAGE_ATTRIBUTE, target.project.usageByName(KotlinUsages.KOTLIN_METADATA))
-            setAttribute(sourceSetsMetadataAttribute, false)
         } else null
 
     val pluginConfiguration = target.project.configurations.maybeCreateResolvable(pluginConfigurationName).apply {

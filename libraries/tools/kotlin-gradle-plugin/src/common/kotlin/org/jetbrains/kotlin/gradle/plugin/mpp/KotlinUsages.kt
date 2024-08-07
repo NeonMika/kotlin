@@ -26,6 +26,9 @@ object KotlinUsages {
     // to be possible to apply a transform actions chain to `kotlin-metadata` artifact to get psm.
     const val KOTLIN_PSM_METADATA = "kotlin-psm-metadata"
 
+    /** unzipped */
+    const val KOTLIN_LOCAL_METADATA = "kotlin-local-metadata"
+
     /**
      * Platform CInterop usage:
      * These are CInterop files that represent executable .klibs for a given konan target
@@ -136,6 +139,11 @@ object KotlinUsages {
             ) {
                 compatible()
             }
+            if (consumerValue?.name == KOTLIN_LOCAL_METADATA &&
+                (producerValue?.name == KOTLIN_METADATA || producerValue?.name == KOTLIN_API || producerValue?.name in javaUsagesForKotlinMetadataConsumers)
+            ) {
+                compatible()
+            }
         }
     }
 
@@ -194,6 +202,9 @@ object KotlinUsages {
             if (consumerValue?.name == KOTLIN_PSM_METADATA) {
                 // Prefer Kotlin psm metadata, but if there's no such variant then accept the candidate order as for kotlin metadata
                 closestMatchToFirstAppropriateCandidate(listOf(KOTLIN_PSM_METADATA) + commonCandidateList)
+            }
+            if (consumerValue?.name == KOTLIN_LOCAL_METADATA) {
+                closestMatchToFirstAppropriateCandidate(listOf(KOTLIN_LOCAL_METADATA) + commonCandidateList)
             }
         }
 
