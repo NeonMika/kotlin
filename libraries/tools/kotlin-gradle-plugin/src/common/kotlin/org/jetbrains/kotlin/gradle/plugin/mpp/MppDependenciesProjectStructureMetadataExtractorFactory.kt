@@ -9,6 +9,8 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
+import org.gradle.api.attributes.Usage
+import org.jetbrains.kotlin.gradle.plugin.usageByName
 import org.jetbrains.kotlin.gradle.tasks.configuration.BaseKotlinCompileConfig.Companion.ARTIFACT_TYPE_ATTRIBUTE
 import org.jetbrains.kotlin.gradle.utils.*
 
@@ -50,7 +52,7 @@ private constructor(
                 )
             } else {
 
-                if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
+                if (isCompositProjectContainsExternalPsm(metadataArtifact)) {
                     /*
                     For MPP projects starting from 2.1.0, we have consumable/resolvable configurations to get PSM
                     Such an approach prevents project-isolation violations.
@@ -77,13 +79,19 @@ private constructor(
                 }
             }
         } else {
-            if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
+            if (isCompositProjectContainsExternalPsm(metadataArtifact)) {
                 getProjectMppDependencyProjectStructureMetadataExtractorForCompositProject(resolvedMetadataConfiguration, moduleId)
             } else {
                 JarMppDependencyProjectStructureMetadataExtractor(metadataArtifact.file)
             }
         }
     }
+
+    private fun isCompositProjectContainsExternalPsm(metadataArtifact: ResolvedArtifactResult) =
+        metadataArtifact.variant.attributes.getAttribute(Usage.USAGE_ATTRIBUTE)?.name in listOf(
+            KotlinUsages.KOTLIN_PSM_METADATA,
+            KotlinUsages.KOTLIN_LOCAL_METADATA
+        )
 
     private fun getProjectMppDependencyProjectStructureMetadataExtractorForCompositProject(
         resolvedMetadataConfiguration: LazyResolvedConfiguration?,
