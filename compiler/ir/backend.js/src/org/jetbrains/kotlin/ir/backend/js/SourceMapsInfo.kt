@@ -29,7 +29,7 @@ data class SourceMapsInfo(
                     configuration.get(JSConfigurationKeys.OUTPUT_DIR),
                     configuration.get(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, SourceMapSourceEmbedding.INLINING),
                     configuration.get(JSConfigurationKeys.SOURCEMAP_NAMES_POLICY, SourceMapNamesPolicy.SIMPLE_NAMES),
-                    configuration.get(WasmConfigurationKeys.WASM_SOURCE_MAP_INCLUDE_KLIB_FILES, false)
+                    configuration.getBoolean(WasmConfigurationKeys.WASM_SOURCE_MAP_INCLUDE_KLIB_FILES),
                 )
             } else {
                 null
