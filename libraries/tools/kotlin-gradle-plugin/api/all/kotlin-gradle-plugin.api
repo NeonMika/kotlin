@@ -1066,7 +1066,6 @@ public abstract class org/jetbrains/kotlin/gradle/plugin/cocoapods/CocoapodsExte
 	public final fun setVersion (Ljava/lang/String;)V
 	public final fun specRepos (Lkotlin/jvm/functions/Function1;)V
 	public final fun specRepos (Lorg/gradle/api/Action;)V
-	public final fun useLibraries ()V
 }
 
 public abstract class org/jetbrains/kotlin/gradle/plugin/cocoapods/CocoapodsExtension$CocoapodsDependency : org/gradle/api/Named {
@@ -1338,6 +1337,11 @@ public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingD
 public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$IncompatibleAgpVersionTooLowFatalError : org/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnosticFactory {
 	public static final field INSTANCE Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$IncompatibleAgpVersionTooLowFatalError;
 	public final fun invoke (Ljava/lang/String;Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnostic;
+}
+
+public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$IncompatibleGradleVersionTooLowFatalError : org/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnosticFactory {
+	public static final field INSTANCE Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$IncompatibleGradleVersionTooLowFatalError;
+	public final fun invoke (Lorg/gradle/util/GradleVersion;Lorg/gradle/util/GradleVersion;)Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnostic;
 }
 
 public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$InconsistentTargetCompatibilityForKotlinAndJavaTasks : org/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnosticFactory {
@@ -5984,11 +5988,6 @@ public final class org/jetbrains/kotlin/gradle/targets/native/cocoapods/Cocoapod
 	public final fun invoke ()Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnostic;
 }
 
-public final class org/jetbrains/kotlin/gradle/targets/native/cocoapods/CocoapodsPluginDiagnostics$UseLibrariesUsed : org/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnosticFactory {
-	public static final field INSTANCE Lorg/jetbrains/kotlin/gradle/targets/native/cocoapods/CocoapodsPluginDiagnostics$UseLibrariesUsed;
-	public final fun invoke ()Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnostic;
-}
-
 public abstract class org/jetbrains/kotlin/gradle/targets/native/cocoapods/KotlinArtifactsPodspecExtension {
 	public fun <init> ()V
 	public final fun attribute (Ljava/lang/String;Ljava/lang/String;)V
@@ -6956,10 +6955,6 @@ public final class org/jetbrains/kotlin/gradle/utils/CommandFallback$Error : org
 	public final fun getError ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/kotlin/gradle/utils/CompatibilityKt {
-	public static final field minSupportedGradleVersion Ljava/lang/String;
 }
 
 public final class org/jetbrains/kotlin/gradle/utils/ComponentIdentifiersKt {
