@@ -42,7 +42,6 @@ internal fun Project.setupProjectStructureMetadataOutgoingArtifacts() {
 
         apiElements.outgoing.variants.maybeCreate("projectStructureMetadata").apply {
             artifact(generateProjectStructureMetadata.map { task -> task.resultFile }) {
-                it.builtBy(generateProjectStructureMetadata)
                 it.classifier = "psm-metadata"
             }
             setAttribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_PSM_METADATA))
