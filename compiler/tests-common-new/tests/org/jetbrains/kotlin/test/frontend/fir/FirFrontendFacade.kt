@@ -150,7 +150,7 @@ open class FirFrontendFacade(
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val configuration = compilerConfigurationProvider.getCompilerConfiguration(mainModule)
 
-        val libraryList = initializeLibraryList(mainModule, binaryModuleData, targetPlatform, configuration, testServices)
+        val libraryList = initializeLibraryList(listOf(mainModule), binaryModuleData, targetPlatform, configuration, testServices)
 
         val moduleInfoProvider = testServices.firModuleInfoProvider
         val moduleDataMap = mutableMapOf<TestModule, FirModuleData>()
