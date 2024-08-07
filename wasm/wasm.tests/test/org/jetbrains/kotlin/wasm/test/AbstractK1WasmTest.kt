@@ -80,6 +80,7 @@ open class AbstractK1WasmSteppingTest : AbstractK1WasmTest(
         commonConfigurationForWasmBlackBoxCodegenTest()
         defaultDirectives {
             +WasmEnvironmentConfigurationDirectives.GENERATE_SOURCE_MAP
+            +WasmEnvironmentConfigurationDirectives.SOURCE_MAP_INCLUDE_KLIB_FILES
         }
     }
 }

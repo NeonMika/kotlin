@@ -7,20 +7,19 @@ package org.jetbrains.kotlin.js.sourceMap
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.io.File
 import java.io.IOException
 
 class SourceFilePathResolver(
     sourceRoots: List<File>,
     outputDir: File? = null,
-    forcedModules: List<String> = emptyList(),
+    private val includeKlibFiles: Boolean = false
 ) {
     private val sourceRoots = sourceRoots.mapTo(mutableSetOf<File>()) { it.absoluteFile }
     private val outputDirPathResolver = outputDir?.let(::RelativePathCalculator)
     private val cache = mutableMapOf<File, String>()
-    private val modulesAndTheirSourcesStatus = hashMapOf<String, Boolean>().apply {
-        forcedModules.forEach { put(it, true) }
-    }
+    private val modulesAndTheirSourcesStatus = hashMapOf<String, Boolean>()
 
     @Throws(IOException::class)
     fun getPathRelativeToSourceRoots(file: File): String {
@@ -34,16 +33,8 @@ class SourceFilePathResolver(
 
     @Throws(IOException::class)
     fun getPathRelativeToSourceRootsIfExists(moduleId: String, file: File): String? {
-        var moduleHasSources = modulesAndTheirSourcesStatus[moduleId]
-
-        if (moduleHasSources == null) {
-            moduleHasSources = file.exists()
-            modulesAndTheirSourcesStatus[moduleId] = moduleHasSources
-        }
-
-        if (moduleHasSources == false) return null
-
-        return getPathRelativeToSourceRoots(file)
+        val moduleSourcesShouldBeAdded = includeKlibFiles || modulesAndTheirSourcesStatus.getOrPut(moduleId) { file.exists() }
+        return runIf(moduleSourcesShouldBeAdded) { getPathRelativeToSourceRoots(file) }
     }
 
     @Throws(IOException::class)
@@ -86,13 +77,13 @@ class SourceFilePathResolver(
             sourceRoots: List<String>,
             sourceMapPrefix: String,
             outputDir: File?,
-            forcedModules: List<String> = emptyList(),
+            includeKlibFiles: Boolean = false,
         ): SourceFilePathResolver {
             val generateRelativePathsInSourceMap = sourceMapPrefix.isEmpty() && sourceRoots.isEmpty()
             return SourceFilePathResolver(
                 sourceRoots.map(::File),
                 outputDir.takeIf { generateRelativePathsInSourceMap },
-                forcedModules
+                includeKlibFiles
             )
         }
     }

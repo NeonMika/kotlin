@@ -44,8 +44,8 @@ object WasmEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
-    val SOURCE_MAP_FORCED_MODULES by stringDirective(
-        description = "list of modules for which we should generate mappings even if there is no physical files inside",
+    val SOURCE_MAP_INCLUDE_KLIB_FILES by directive(
+        description = "Enable including paths of the files that existing only in KLIB",
         applicability = DirectiveApplicability.Global
     )
 

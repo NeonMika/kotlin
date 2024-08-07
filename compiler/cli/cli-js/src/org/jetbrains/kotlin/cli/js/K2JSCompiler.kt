@@ -869,6 +869,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
             sourceMapNamesPolicy = SourceMapNamesPolicy.SIMPLE_NAMES
         }
         configuration.put(JSConfigurationKeys.SOURCEMAP_NAMES_POLICY, sourceMapNamesPolicy)
+        configuration.put(JSConfigurationKeys.SOURCE_MAP_INCLUDE_KLIB_FILES, arguments.includeKlibFilesIntoSourceMap)
 
         configuration.put(JSConfigurationKeys.PRINT_REACHABILITY_INFO, arguments.irDcePrintReachabilityInfo)
         configuration.put(JSConfigurationKeys.FAKE_OVERRIDE_VALIDATOR, arguments.fakeOverrideValidator)

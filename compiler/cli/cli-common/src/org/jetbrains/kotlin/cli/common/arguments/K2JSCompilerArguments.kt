@@ -275,6 +275,16 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
         }
 
     @Argument(
+        value = "-Xsource-map-include-klib-files",
+        description = "Insert mappings from third-party KLIBs into the generated source map even if the source is unavailable on the end-user machine."
+    )
+    var includeKlibFilesIntoSourceMap = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xir-dce-dump-reachability-info-to-file",
         valueDescription = "<path>",
         description = "Dump reachability information collected about declarations while performing DCE to a file. " +

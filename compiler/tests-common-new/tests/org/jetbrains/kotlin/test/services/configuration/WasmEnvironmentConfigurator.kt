@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.SOURCE_MAP_EMBED_SOURCES
 import org.jetbrains.kotlin.test.directives.WasmEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.WasmEnvironmentConfigurationDirectives.DISABLE_WASM_EXCEPTION_HANDLING
+import org.jetbrains.kotlin.test.directives.WasmEnvironmentConfigurationDirectives.SOURCE_MAP_INCLUDE_KLIB_FILES
 import org.jetbrains.kotlin.test.directives.WasmEnvironmentConfigurationDirectives.USE_NEW_EXCEPTION_HANDLING_PROPOSAL
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
@@ -93,10 +94,7 @@ abstract class WasmEnvironmentConfigurator(testServices: TestServices) : Environ
         val sourceDirs = module.files.map { it.originalFile.parent }.distinct()
         configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceDirs)
         configuration.put(JSConfigurationKeys.SOURCE_MAP, true)
-        configuration.put(
-            JSConfigurationKeys.SOURCE_MAP_FORCED_MODULES,
-            registeredDirectives[WasmEnvironmentConfigurationDirectives.SOURCE_MAP_FORCED_MODULES]
-        )
+        configuration.put(JSConfigurationKeys.SOURCE_MAP_INCLUDE_KLIB_FILES, SOURCE_MAP_INCLUDE_KLIB_FILES in registeredDirectives)
 
         val sourceMapSourceEmbedding = registeredDirectives[SOURCE_MAP_EMBED_SOURCES].singleOrNull() ?: SourceMapSourceEmbedding.NEVER
         configuration.put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapSourceEmbedding)
