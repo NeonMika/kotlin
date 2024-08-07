@@ -49,7 +49,6 @@ fun box() {
 // test.kt:6 $foo (39, 46)
 // test.kt:7 $flaf$lambda.invoke (52, 55)
 // test.kt:11 $flaf$lambda.invoke
-// test.kt:57 $flaf$lambda.invoke (218, 303, 303, 296)
 // test.kt:12 $flaf$lambda.invoke (12, 12, 12, 12, 15)
 // test.kt:13 $flaf$lambda.invoke
 // test.kt:15 $flaf
