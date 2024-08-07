@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.cli.common.collectSources
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.OUTPUT
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil
-import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.common.output.writeAll
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.FirKotlinToJvmBytecodeCompiler
@@ -56,7 +55,9 @@ import java.io.File
  * It is supposed to replace the old AA-based implementation ([Kapt4AnalysisHandlerExtension]) once we ensure that there are no critical
  * problems with it.
  */
-internal class FirKaptAnalysisHandlerExtension : FirAnalysisHandlerExtension() {
+open class FirKaptAnalysisHandlerExtension(
+    private val kaptLogger: MessageCollectorBackedKaptLogger? = null,
+) : FirAnalysisHandlerExtension() {
     lateinit var logger: MessageCollectorBackedKaptLogger
     lateinit var options: KaptOptions
 
@@ -66,12 +67,13 @@ internal class FirKaptAnalysisHandlerExtension : FirAnalysisHandlerExtension() {
 
     override fun doAnalysis(project: Project, configuration: CompilerConfiguration): Boolean {
         val optionsBuilder = configuration[KAPT_OPTIONS]!!
-        val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-        logger = MessageCollectorBackedKaptLogger(
-            KaptFlag.VERBOSE in optionsBuilder.flags,
-            KaptFlag.INFO_AS_WARNINGS in optionsBuilder.flags,
-            messageCollector
-        )
+        logger = kaptLogger
+            ?: MessageCollectorBackedKaptLogger(
+                KaptFlag.VERBOSE in optionsBuilder.flags,
+                KaptFlag.INFO_AS_WARNINGS in optionsBuilder.flags,
+                configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+            )
+        val messageCollector = logger.messageCollector
 
         if (optionsBuilder.mode == AptMode.WITH_COMPILATION) {
             logger.error("KAPT \"compile\" mode is not supported in Kotlin 2.x. Run kapt with -Kapt-mode=stubsAndApt and use kotlinc for the final compilation step.")
@@ -250,10 +252,10 @@ internal class FirKaptAnalysisHandlerExtension : FirAnalysisHandlerExtension() {
         logger.info { "Stubs for Kotlin classes: " + kaptStubs.joinToString { it.file.sourcefile.name } }
 
         saveStubs(kaptContext, kaptStubs, logger.messageCollector)
-        saveIncrementalData(kaptContext, logger.messageCollector)
+        saveIncrementalData(kaptContext, logger.messageCollector, converter)
     }
 
-    private fun saveStubs(
+    protected open fun saveStubs(
         kaptContext: KaptContextForStubGeneration,
         stubs: List<KaptStub>,
         messageCollector: MessageCollector,
@@ -300,9 +302,10 @@ internal class FirKaptAnalysisHandlerExtension : FirAnalysisHandlerExtension() {
         logger.info { "Source files: ${sourceFiles}" }
     }
 
-    private fun saveIncrementalData(
+    protected open fun saveIncrementalData(
         kaptContext: KaptContextForStubGeneration,
-        messageCollector: MessageCollector
+        messageCollector: MessageCollector,
+        converter: KaptStubConverter,
     ) {
         val incrementalDataOutputDir = options.incrementalDataOutputDir ?: return
 
@@ -315,7 +318,7 @@ internal class FirKaptAnalysisHandlerExtension : FirAnalysisHandlerExtension() {
         )
     }
 
-    private fun loadProcessors(): LoadedProcessors {
+    protected open fun loadProcessors(): LoadedProcessors {
         return EfficientProcessorLoader(options, logger).loadProcessors()
     }
 

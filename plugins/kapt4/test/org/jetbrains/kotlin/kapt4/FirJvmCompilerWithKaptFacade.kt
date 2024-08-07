@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.GroupedKtSources
 import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.test.services.*
 
 class FirJvmCompilerWithKaptFacade(
     private val testServices: TestServices,
+    private val additionalPluginExtension: IrGenerationExtension? = null,
 ) :
     AbstractTestFacade<ResultingArtifact.Source, KaptContextBinaryArtifact>() {
     override val inputKind: TestArtifactKind<ResultingArtifact.Source>
@@ -54,6 +56,10 @@ class FirJvmCompilerWithKaptFacade(
             configuration, testServices.compilerConfigurationProvider.testRootDisposable, EnvironmentConfigFiles.JVM_CONFIG_FILES,
             messageCollector,
         )
+
+        if (additionalPluginExtension != null) {
+            IrGenerationExtension.registerExtension(projectEnvironment.project, additionalPluginExtension)
+        }
 
         val ktFiles = testServices.sourceFileProvider.getKtFilesForSourceFiles(
             module.files, projectEnvironment.project, findViaVfs = true,
@@ -103,4 +109,11 @@ class FirJvmCompilerWithKaptFacade(
     override fun shouldRunAnalysis(module: TestModule): Boolean {
         return true
     }
+}
+
+class FirKaptContextBinaryArtifact(val kaptContext: KaptContextForStubGeneration) : ResultingArtifact.Binary<FirKaptContextBinaryArtifact>() {
+    object Kind : BinaryKind<FirKaptContextBinaryArtifact>("FirKaptArtifact")
+
+    override val kind: BinaryKind<FirKaptContextBinaryArtifact>
+        get() = Kind
 }
