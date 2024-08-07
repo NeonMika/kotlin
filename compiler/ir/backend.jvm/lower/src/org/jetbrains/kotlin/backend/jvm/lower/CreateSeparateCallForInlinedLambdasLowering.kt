@@ -50,7 +50,6 @@ class CreateSeparateCallForInlinedLambdasLowering(val context: JvmBackendContext
     }
 
     private fun IrInlinedFunctionBlock.getOnlyInlinableArguments(): List<IrExpression> {
-        @OptIn(JvmIrInlineExperimental::class)
         return this.inlineCall!!.getArgumentsWithIr()
             .filter { (param, arg) -> param.isInlineParameter() && arg.isInlinableExpression() }
             .map { it.second }

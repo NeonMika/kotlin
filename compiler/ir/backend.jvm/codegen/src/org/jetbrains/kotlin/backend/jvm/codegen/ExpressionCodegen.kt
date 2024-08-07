@@ -473,7 +473,6 @@ class ExpressionCodegen(
     override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock, data: BlockInfo): PromisedValue {
         val info = BlockInfo(data)
 
-        @OptIn(JvmIrInlineExperimental::class)
         val inlineCall = inlinedBlock.inlineCall!!
         val callee = inlinedBlock.inlineDeclaration as? IrFunction
 
@@ -553,7 +552,6 @@ class ExpressionCodegen(
 
         val callee = this.inlineDeclaration
 
-        @OptIn(JvmIrInlineExperimental::class)
         val inlineCall = this.inlineCall!!
 
         val calleeFromActualClass = callee.getClassWithDeclaredFunction()!!.declarations
