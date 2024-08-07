@@ -39,11 +39,6 @@ val updateDefFileTasksPerFamily = if (HostManager.hostIsMac) {
 } else {
     emptyMap()
 }
-updateDefFileTasksPerFamily.values.forEach { task ->
-    updateDefFileDependenciesTask.configure {
-        dependsOn(task)
-    }
-}
 
 
 enabledTargets(platformManager).forEach { target ->

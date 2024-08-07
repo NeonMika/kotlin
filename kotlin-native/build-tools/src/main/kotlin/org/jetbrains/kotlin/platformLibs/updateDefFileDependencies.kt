@@ -14,6 +14,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
+import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.visibleName
@@ -35,6 +36,7 @@ fun Project.registerUpdateDefFileDependenciesForAppleFamiliesTasks(aggregateTask
     aggregateTask.configure {
         onlyIf { shouldUpdate }
         inputs.files(defFilesChanges)
+        // Stub output to make this task up-to-date when there are no changes in defFilesChanges files
         outputs.upToDateWhen { true }
         doLast {
             val changes = defFilesChanges.map { it.readText() }.joinToString("\n")
@@ -53,18 +55,16 @@ fun Project.registerUpdateDefFileDependenciesForAppleFamiliesTasks(aggregateTask
         }
     }
 
-    return mapOf(
-            Family.IOS to listOf(KonanTarget.IOS_ARM64, KonanTarget.IOS_SIMULATOR_ARM64, KonanTarget.IOS_X64),
-            Family.OSX to listOf(KonanTarget.MACOS_ARM64, KonanTarget.MACOS_X64),
-            Family.WATCHOS to listOf(KonanTarget.WATCHOS_ARM32, KonanTarget.WATCHOS_ARM64, KonanTarget.WATCHOS_DEVICE_ARM64, KonanTarget.WATCHOS_SIMULATOR_ARM64, KonanTarget.WATCHOS_X64),
-            Family.TVOS to listOf(KonanTarget.TVOS_ARM64, KonanTarget.TVOS_SIMULATOR_ARM64, KonanTarget.TVOS_X64),
-    ).mapValues {
+    return KonanTarget.predefinedTargets.values.filter { it.family.isAppleFamily }.groupBy { it.family }.mapValues {
         val task = registerUpdateDefFileDependenciesTask(
                 family = it.key,
                 targets = it.value,
                 shouldUpdate = shouldUpdate,
         )
         defFilesChanges.from(task.flatMap { it.defFileChangesOutput })
+        aggregateTask.configure {
+            dependsOn(task)
+        }
         return@mapValues task
     }
 }
