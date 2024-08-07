@@ -65,17 +65,13 @@ object KotlinUsages {
     internal fun consumerApiUsage(project: Project, platformType: KotlinPlatformType) = project.usageByName(
         when {
             platformType in jvmPlatformTypes -> JAVA_API
-            isMetadataUsage(platformType, project) -> KOTLIN_METADATA
+            platformType == common
+                    /** The kotlinExtension check below can be removed when legacy [KotlinPlatformCommonPlugin] is also removed. */
+                    && project.kotlinExtension is KotlinMultiplatformExtension
+                    && !project.isCompatibilityMetadataVariantEnabled -> KOTLIN_METADATA
             else -> KOTLIN_API
         }
     )
-
-    internal fun isMetadataUsage(platformType: KotlinPlatformType, project: Project) =
-        (platformType == common
-                /** The kotlinExtension check below can be removed when legacy [KotlinPlatformCommonPlugin] is also removed. */
-                /** The kotlinExtension check below can be removed when legacy [KotlinPlatformCommonPlugin] is also removed. */
-                && project.kotlinExtension is KotlinMultiplatformExtension
-                && !project.isCompatibilityMetadataVariantEnabled)
 
     internal fun consumerApiUsage(target: KotlinTarget): Usage =
         consumerApiUsage(target.project, target.platformType)
