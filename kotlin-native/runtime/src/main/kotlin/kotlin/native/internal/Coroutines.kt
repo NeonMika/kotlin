@@ -24,7 +24,6 @@ internal inline suspend fun getCoroutineContext(): CoroutineContext =
 
 @TypedIntrinsic(IntrinsicType.RETURN_IF_SUSPENDED)
 @PublishedApi
-@Escapes(0b01) // argument may be stored in the coroutine state
 internal external suspend fun <T> returnIfSuspended(@Suppress("UNUSED_PARAMETER") argument: Any?): T
 
 @TypedIntrinsic(IntrinsicType.SAVE_COROUTINE_STATE)

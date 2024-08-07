@@ -27,10 +27,7 @@ import kotlin.native.internal.escapeAnalysis.PointsTo
 @TypedIntrinsic(IntrinsicType.IEEE_754_EQUALS) @PublishedApi external internal fun ieee754Equals(first: Double, second: Double): Boolean
 
 // Reinterprets this value from T to R having the same binary representation (e.g. to unwrap inline class).
-@TypedIntrinsic(IntrinsicType.IDENTITY)
-@PublishedApi
-@PointsTo(0x00, 0x01) // ret -> this
-internal external fun <T, R> T.reinterpret(): R
+@TypedIntrinsic(IntrinsicType.IDENTITY) @PublishedApi external internal fun <T, R> T.reinterpret(): R
 
 
 @TypedIntrinsic(IntrinsicType.THE_UNIT_INSTANCE) @ExportForCompiler external internal fun theUnitInstance(): Unit

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.objcinterop.*
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
@@ -615,13 +616,56 @@ private class BackendChecker(
 
     }
 
-    private fun checkEscapeAnalysisAnnotations(declaration: IrFunction) {
-        val isSupportedDeclaration = declaration.isExternal && declaration.parent.fqNameForIrSerialization.let {
-            // Mimics exclusion from EscapeAnalysis.kt
-            it.startsWith(kotlinPackageFqn)
-                    && !it.startsWith(kotlinPackageFqn.child(Name.identifier("concurrent")))
-                    && !it.startsWith(kotlinPackageFqn.child(Name.identifier("native")).child(Name.identifier("concurrent")))
+    private val dfgHandledSymbols: List<IrSymbol> by lazy {
+        buildList {
+            // From DFGBuilder.kt
+            with(symbols) {
+                add(createUninitializedInstance)
+                add(reinterpret)
+                add(initInstance)
+            }
         }
+    }
+
+    private val IntrinsicType.mustBeLowered: Boolean
+        get() = when (this) {
+            // From IntrinsicGenerator.kt
+            IntrinsicType.ATOMIC_GET_FIELD,
+            IntrinsicType.ATOMIC_SET_FIELD,
+            IntrinsicType.GET_CONTINUATION,
+            IntrinsicType.RETURN_IF_SUSPENDED,
+            IntrinsicType.SAVE_COROUTINE_STATE,
+            IntrinsicType.RESTORE_COROUTINE_STATE,
+            IntrinsicType.INTEROP_BITS_TO_FLOAT,
+            IntrinsicType.INTEROP_BITS_TO_DOUBLE,
+            IntrinsicType.INTEROP_SIGN_EXTEND,
+            IntrinsicType.INTEROP_NARROW,
+            IntrinsicType.INTEROP_STATIC_C_FUNCTION,
+            IntrinsicType.INTEROP_FUNPTR_INVOKE,
+            IntrinsicType.INTEROP_CONVERT,
+            IntrinsicType.ENUM_VALUES,
+            IntrinsicType.ENUM_VALUE_OF,
+            IntrinsicType.ENUM_ENTRIES,
+            IntrinsicType.WORKER_EXECUTE,
+            IntrinsicType.COMPARE_AND_SET_FIELD,
+            IntrinsicType.COMPARE_AND_EXCHANGE_FIELD,
+            IntrinsicType.GET_AND_SET_FIELD,
+            IntrinsicType.GET_AND_ADD_FIELD -> true
+            else -> false
+        }
+
+    private val FqName.isSupportedPackageByEA: Boolean
+        // From EscapeAnalysis.kt
+        get() = startsWith(kotlinPackageFqn)
+                && !startsWith(kotlinPackageFqn.child(Name.identifier("concurrent")))
+                && !startsWith(kotlinPackageFqn.child(Name.identifier("native")).child(Name.identifier("concurrent")))
+
+    private fun checkEscapeAnalysisAnnotations(declaration: IrFunction) {
+        fun IrFunction.isLoweredIntrinsic() = tryGetIntrinsicType(this)?.mustBeLowered == true
+        val isSupportedDeclaration = declaration.isExternal
+                && declaration.parent.fqNameForIrSerialization.isSupportedPackageByEA
+                && declaration.symbol !in dfgHandledSymbols
+                && !declaration.isLoweredIntrinsic()
         val hasEscapes = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.Escapes)
         val escapesName = NativeRuntimeNames.Annotations.Escapes.asFqNameString()
         val hasEscapesNothing = declaration.annotations.hasAnnotation(NativeRuntimeNames.Annotations.EscapesNothing)

@@ -213,7 +213,6 @@ public external fun <T> createUninitializedInstance(): T
 
 @TypedIntrinsic(IntrinsicType.INIT_INSTANCE)
 @InternalForKotlinNative
-@Escapes.Nothing
 public external fun initInstance(thiz: Any, constructorCall: Any): Unit
 
 @PublishedApi
