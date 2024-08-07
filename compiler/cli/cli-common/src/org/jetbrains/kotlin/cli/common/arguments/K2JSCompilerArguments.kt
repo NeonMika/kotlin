@@ -275,8 +275,8 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
         }
 
     @Argument(
-        value = "-Xwasm-source-map-include-klib-files",
-        description = "Insert mappings from third-party KLIBs into the generated source map even if the source is unavailable on the end-user machine."
+        value = "-Xwasm-source-map-include-mappings-from-unavailable-sources",
+        description = "Insert source mappings from libraries even if their sources are unavailable on the end-user machine."
     )
     var includeKlibFilesIntoSourceMap = false
         set(value) {

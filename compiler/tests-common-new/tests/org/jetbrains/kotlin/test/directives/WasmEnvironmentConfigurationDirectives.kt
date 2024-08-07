@@ -44,8 +44,8 @@ object WasmEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
-    val SOURCE_MAP_INCLUDE_KLIB_FILES by directive(
-        description = "Enable including paths of the files that existing only in KLIB",
+    val SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES by directive(
+        description = "Insert source mappings from libraries even if their sources are unavailable on the end-user machine",
         applicability = DirectiveApplicability.Global
     )
 

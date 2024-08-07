@@ -215,7 +215,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
         configuration.put(WasmConfigurationKeys.WASM_GENERATE_WAT, arguments.wasmGenerateWat)
         configuration.put(WasmConfigurationKeys.WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS, arguments.wasmUseTrapsInsteadOfExceptions)
         configuration.put(WasmConfigurationKeys.WASM_USE_NEW_EXCEPTION_PROPOSAL, arguments.wasmUseNewExceptionProposal)
-        configuration.put(WasmConfigurationKeys.WASM_SOURCE_MAP_INCLUDE_KLIB_FILES, arguments.includeKlibFilesIntoSourceMap)
+        configuration.put(WasmConfigurationKeys.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES, arguments.includeKlibFilesIntoSourceMap)
 
         configuration.putIfNotNull(WasmConfigurationKeys.WASM_TARGET, arguments.wasmTarget?.let(WasmTarget::fromName))
 

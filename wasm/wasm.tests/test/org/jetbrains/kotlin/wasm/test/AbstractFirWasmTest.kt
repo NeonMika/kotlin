@@ -132,7 +132,7 @@ open class AbstractFirWasmJsSteppingTest : AbstractFirWasmJsTest(
         commonConfigurationForWasmBlackBoxCodegenTest()
         defaultDirectives {
             +WasmEnvironmentConfigurationDirectives.GENERATE_SOURCE_MAP
-            +WasmEnvironmentConfigurationDirectives.SOURCE_MAP_INCLUDE_KLIB_FILES
+            +WasmEnvironmentConfigurationDirectives.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES
         }
     }
 }
