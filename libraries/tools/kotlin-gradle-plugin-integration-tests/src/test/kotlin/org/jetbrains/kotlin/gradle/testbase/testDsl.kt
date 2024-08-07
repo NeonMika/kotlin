@@ -690,6 +690,13 @@ internal fun String.insertBlockToBuildScriptAfterPluginsAndImports(blockToInsert
     return StringBuilder(this).insert(insertionIndex + 1, "\n$blockToInsert\n").toString()
 }
 
+internal fun String.insertBlockToBuildScriptAfterImports(blockToInsert: String): String {
+    val importsPattern = Regex("^import.*$", RegexOption.MULTILINE)
+
+    val lastImportIndex = importsPattern.findAll(this).map { it.range.last }.maxOrNull() ?: return blockToInsert + this
+    return StringBuilder(this).insert(lastImportIndex + 1, "\n$blockToInsert\n").toString()
+}
+
 
 internal fun Path.addPluginManagementToSettings() {
     val buildGradle = resolve("build.gradle")
