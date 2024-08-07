@@ -29,9 +29,15 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.js.backend.JsToStringGenerationVisitor
 import org.jetbrains.kotlin.js.backend.ast.*
+import org.jetbrains.kotlin.js.sourceMap.SourceFilePathResolver
+import org.jetbrains.kotlin.js.sourceMap.SourceMap3Builder
+import org.jetbrains.kotlin.js.sourceMap.SourceMapBuilderConsumer
+import org.jetbrains.kotlin.js.util.TextOutputImpl
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import java.io.File
 
 /**
  * Outlines `kotlin.js.js(code: String)` calls where the JavaScript code passed as a string literal references Kotlin locals.
@@ -39,11 +45,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
  *
  * Transforms a call to `kotlin.js.js` into a call to generated local external function annotated with [kotlin.js.JsFun].
  *
+ * The `sourceMap` argument of the annotation maps the offsets in its `code` argument to the offsets in the original Kotlin source.
+ *
  * **Before transformation:**
  * ```kotlin
  * fun foo(x: Int): Int {
- *     val theAnswer = 42
- *     return js("x + theAnswer")
+ *   val theAnswer = 42
+ *   return js("x + theAnswer")
  * }
  * ```
  *
@@ -51,11 +59,22 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
  * ```kotlin
  * fun foo(x: Int): Int {
  *
- *     @kotlin.js.JsFun("function (x, theAnswer) { return x + theAnswer; }")
- *     /*local*/ external fun foo$outlinedJsCode$(x: Int, theAnswer: Int): dynamic
+ *   @kotlin.js.JsFun(
+ *     code = "function (x,theAnswer) {return x+theAnswer}",
+ *     sourceMap = """
+ *     {
+ *       "version": 3
+ *       "sources": ["foo.kt"]
+ *       "sourcesContent": [null]
+ *       "names":[],
+ *       "mappings": "+BAKc,CAAE,CAAE,S"
+ *     }
+ *     """
+ *   )
+ *   /*local*/ external fun foo$outlinedJsCode$(x: Int, theAnswer: Int): dynamic
  *
- *     val theAnswer = 42
- *     return foo$outlinedJsCode$(x, theAnswer)
+ *   val theAnswer = 42
+ *   return foo$outlinedJsCode$(x, theAnswer)
  * }
  * ```
  *
@@ -209,8 +228,9 @@ private class JsCodeOutlineTransformer(
 
         // Building JS Ast function
         val newFun = createJsFunction(jsStatements, kotlinLocalsUsedInJs)
-        val jsFunCode = newFun.toString()
+        val (jsFunCode, sourceMap) = printJsCodeWithDebugInfo(newFun)
         annotation.putValueArgument(0, jsFunCode.toIrConst(backendContext.irBuiltIns.stringType))
+        annotation.putValueArgument(1, sourceMap.toIrConst(backendContext.irBuiltIns.stringType))
 
         return with(backendContext.createIrBuilder(container.symbol)) {
             irCall(outlinedFunction).apply {
@@ -249,6 +269,24 @@ private class JsCodeOutlineTransformer(
             newFun.parameters.add(JsParameter(jsName))
         }
         return newFun
+    }
+
+    private fun printJsCodeWithDebugInfo(jsFunction: JsFunction): Pair<String, String> {
+        val jsCode = TextOutputImpl(/*compact*/true)
+        val sourceMapBuilder = SourceMap3Builder(
+            generatedFile = null,
+            getCurrentOutputColumn = jsCode::getColumn,
+            pathPrefix = "",
+        )
+        val sourceMapBuilderConsumer = SourceMapBuilderConsumer(
+            File("."),
+            sourceMapBuilder,
+            SourceFilePathResolver(emptyList()),
+            provideCurrentModuleContent = false,
+            provideExternalModuleContent = false,
+        )
+        JsToStringGenerationVisitor(jsCode, sourceMapBuilderConsumer).accept(jsFunction)
+        return jsCode.toString() to sourceMapBuilder.build()
     }
 
     private fun createOutlinedFunction(kotlinLocalsUsedInJs: Map<JsName, IrValueDeclaration>): IrSimpleFunction {
@@ -317,7 +355,7 @@ class JsScopesCollector : RecursiveJsVisitor() {
 
 private class KotlinLocalsUsageCollector(
     private val scopeInfo: JsScopesCollector,
-    private val findValueDeclarationWithName: (String) -> IrValueDeclaration?
+    private val findValueDeclarationWithName: (String) -> IrValueDeclaration?,
 ) : RecursiveJsVisitor() {
     private val functionStack = mutableListOf<JsFunction?>(null)
     private val processedNames = mutableSetOf<String>()
