@@ -14,7 +14,7 @@ import java.io.IOException
 class SourceFilePathResolver(
     sourceRoots: List<File>,
     outputDir: File? = null,
-    private val includeKlibFiles: Boolean = false
+    private val includeUnavailableSourcesIntoSourceMap: Boolean = false
 ) {
     private val sourceRoots = sourceRoots.mapTo(mutableSetOf<File>()) { it.absoluteFile }
     private val outputDirPathResolver = outputDir?.let(::RelativePathCalculator)
@@ -33,7 +33,7 @@ class SourceFilePathResolver(
 
     @Throws(IOException::class)
     fun getPathRelativeToSourceRootsIfExists(moduleId: String, file: File): String? {
-        val moduleSourcesShouldBeAdded = includeKlibFiles || modulesAndTheirSourcesStatus.getOrPut(moduleId) { file.exists() }
+        val moduleSourcesShouldBeAdded = includeUnavailableSourcesIntoSourceMap || modulesAndTheirSourcesStatus.getOrPut(moduleId) { file.exists() }
         return runIf(moduleSourcesShouldBeAdded) { getPathRelativeToSourceRoots(file) }
     }
 
@@ -70,7 +70,7 @@ class SourceFilePathResolver(
             sourceRoots = configuration.get(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, emptyList()),
             sourceMapPrefix = configuration.get(JSConfigurationKeys.SOURCE_MAP_PREFIX, ""),
             outputDir = configuration.get(JSConfigurationKeys.OUTPUT_DIR),
-            includeKlibFiles = configuration.getBoolean(JSConfigurationKeys.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES)
+            includeUnavailableSourcesIntoSourceMap = configuration.getBoolean(JSConfigurationKeys.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES)
         )
 
         @JvmStatic
@@ -78,13 +78,13 @@ class SourceFilePathResolver(
             sourceRoots: List<String>,
             sourceMapPrefix: String,
             outputDir: File?,
-            includeKlibFiles: Boolean = false,
+            includeUnavailableSourcesIntoSourceMap: Boolean = false,
         ): SourceFilePathResolver {
             val generateRelativePathsInSourceMap = sourceMapPrefix.isEmpty() && sourceRoots.isEmpty()
             return SourceFilePathResolver(
                 sourceRoots.map(::File),
                 outputDir.takeIf { generateRelativePathsInSourceMap },
-                includeKlibFiles
+                includeUnavailableSourcesIntoSourceMap
             )
         }
     }

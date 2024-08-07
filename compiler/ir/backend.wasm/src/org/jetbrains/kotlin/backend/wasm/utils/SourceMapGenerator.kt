@@ -43,7 +43,7 @@ class SourceMapGenerator(
             sourceMapsInfo.sourceRoots,
             sourceMapsInfo.sourceMapPrefix,
             sourceMapsInfo.outputDir,
-            sourceMapsInfo.includeKlibFiles
+            sourceMapsInfo.includeUnavailableSourcesIntoSourceMap
         )
 
         var prev: SourceLocation.Location? = null

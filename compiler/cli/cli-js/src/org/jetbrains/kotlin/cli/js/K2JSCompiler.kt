@@ -852,7 +852,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
             sourceMapContentEmbedding = SourceMapSourceEmbedding.INLINING
         }
         configuration.put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapContentEmbedding)
-        configuration.put(JSConfigurationKeys.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES, arguments.includeKlibFilesIntoSourceMap)
+        configuration.put(JSConfigurationKeys.SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_FILES, arguments.includeUnavailableSourcesIntoSourceMap)
 
         if (!arguments.sourceMap && sourceMapEmbedContentString != null) {
             messageCollector.report(WARNING, "source-map-embed-sources argument has no effect without source map", null)

@@ -278,7 +278,7 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
         value = "-Xwasm-source-map-include-mappings-from-unavailable-sources",
         description = "Insert source mappings from libraries even if their sources are unavailable on the end-user machine."
     )
-    var includeKlibFilesIntoSourceMap = false
+    var includeUnavailableSourcesIntoSourceMap = false
         set(value) {
             checkFrozen()
             field = value

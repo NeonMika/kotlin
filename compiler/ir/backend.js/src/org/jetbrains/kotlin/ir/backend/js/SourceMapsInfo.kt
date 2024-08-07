@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.SourceMapNamesPolicy
 import org.jetbrains.kotlin.js.config.SourceMapSourceEmbedding
-import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
 import java.io.File
 
 data class SourceMapsInfo(
@@ -18,7 +17,7 @@ data class SourceMapsInfo(
     val outputDir: File?,
     val sourceMapContentEmbedding: SourceMapSourceEmbedding,
     val namesPolicy: SourceMapNamesPolicy,
-    val includeKlibFiles: Boolean = false
+    val includeUnavailableSourcesIntoSourceMap: Boolean = false
 ) {
     companion object {
         fun from(configuration: CompilerConfiguration): SourceMapsInfo? =
