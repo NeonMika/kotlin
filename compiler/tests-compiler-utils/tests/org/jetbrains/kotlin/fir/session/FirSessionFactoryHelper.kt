@@ -55,7 +55,8 @@ object FirSessionFactoryHelper {
             packagePartProvider,
             languageVersionSettings,
             predefinedJavaComponents = null,
-        ) {}
+            registerExtraComponents = {}
+        )
 
         val mainModuleData = FirModuleDataImpl(
             moduleName,
