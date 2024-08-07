@@ -6,9 +6,12 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp.apple
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.reportDiagnosticOncePerBuild
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -18,23 +21,29 @@ internal abstract class CheckSandboxAndWriteProtectionTask : DefaultTask() {
 
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val directoryFile: Property<File>
+    abstract val builtProductsDir: Property<File>
 
     @get:Input
     abstract val userScriptSandboxingEnabled: Property<Boolean>
 
     @get:Input
-    abstract val frameworkTaskName: Property<String>
+    abstract val taskName: Property<String>
 
     @TaskAction
     fun checkSandboxAndWriteProtection() {
-        val dirAccessible = builtProductsDirAccessibility(directoryFile.orNull)
+        val dirAccessible = builtProductsDirAccessibility(builtProductsDir.orNull)
+        val task = taskName.get()
+        val sandboxingEnabled = userScriptSandboxingEnabled.get()
+
         when (dirAccessible) {
-            DirAccessibility.NOT_ACCESSIBLE -> fireSandboxException(frameworkTaskName.get(), userScriptSandboxingEnabled.get())
+            DirAccessibility.NOT_ACCESSIBLE -> project.fireSandboxException(
+                task,
+                sandboxingEnabled
+            )
             DirAccessibility.DOES_NOT_EXIST,
             DirAccessibility.ACCESSIBLE,
-            -> if (userScriptSandboxingEnabled.get()) {
-                fireSandboxException(frameworkTaskName.get(), true)
+                -> if (sandboxingEnabled) {
+                project.fireSandboxException(task, true)
             }
         }
     }
@@ -61,17 +70,13 @@ internal abstract class CheckSandboxAndWriteProtectionTask : DefaultTask() {
             DirAccessibility.DOES_NOT_EXIST
         }
     }
+}
 
-    private fun fireSandboxException(frameworkTaskName: String, userScriptSandboxingEnabled: Boolean) {
-        val message = if (userScriptSandboxingEnabled) "You " else "BUILT_PRODUCTS_DIR is not accessible, probably you "
-        throw IllegalStateException(
-            message +
-                    "have sandboxing for user scripts enabled." +
-                    "\nTo make the $frameworkTaskName task pass, disable this feature. " +
-                    "\nIn your Xcode project, navigate to \"Build Setting\", " +
-                    "and under \"Build Options\" set \"User script sandboxing\" (ENABLE_USER_SCRIPT_SANDBOXING) to \"NO\". " +
-                    "\nThen, run \"./gradlew --stop\" to stop the Gradle daemon" +
-                    "\nFor more information, see documentation: https://jb.gg/ltd9e6"
+private fun Project.fireSandboxException(taskName: String, userScriptSandboxingEnabled: Boolean) {
+    reportDiagnosticOncePerBuild(
+        KotlinToolingDiagnostics.XcodeUserScriptSandboxingDiagnostic(
+            taskName,
+            userScriptSandboxingEnabled
         )
-    }
+    )
 }

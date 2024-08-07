@@ -276,15 +276,15 @@ private fun Project.registerEmbedTask(
 
 private fun Project.checkSandboxAndWriteProtectionTask(
     environment: XcodeEnvironment,
-    frameworkTaskName: String,
+    taskName: String,
     userScriptSandboxingEnabled: Boolean,
 ) =
     locateOrRegisterTask<CheckSandboxAndWriteProtectionTask>(AppleXcodeTasks.checkSandboxAndWriteProtection) { task ->
         task.group = BasePlugin.BUILD_GROUP
         task.description = "Check BUILT_PRODUCTS_DIR accessible and ENABLE_USER_SCRIPT_SANDBOXING not enabled"
 
-        task.directoryFile.set(environment.builtProductsDir)
-        task.frameworkTaskName.set(frameworkTaskName)
+        task.builtProductsDir.set(environment.builtProductsDir)
+        task.taskName.set(taskName)
         task.userScriptSandboxingEnabled.set(userScriptSandboxingEnabled)
     }
 
