@@ -147,11 +147,14 @@ abstract class FirAbstractSessionFactory {
         // dependsOnDependencies can actualize declarations from their dependencies. Because actual declarations can be more specific
         // (e.g. have additional supertypes), the modules must be ordered from most specific (i.e. actual) to most generic (i.e. expect)
         // to prevent false positive resolution errors (see KT-57369 for an example).
-        return (moduleData.dependencies + moduleData.friendDependencies + moduleData.allDependsOnDependencies)
+        val depsModuleData = moduleData.dependencies + moduleData.friendDependencies + moduleData.allDependsOnDependencies
+        val depsSessions = depsModuleData
             .mapNotNull { sessionProvider?.getSession(it) }
+        val depsProviders = depsSessions
             .flatMap { it.symbolProvider.flatten() }
+        return depsProviders
             .distinct()
-            .sortedBy { it.session.kind }
+            .sortedBy { if (it is KlibBasedSymbolProvider) 0 else it.session.kind.ordinal + 1 }
     }
 
     /* It eliminates dependency and composite providers since the current dependency provider is composite in fact.
@@ -174,7 +177,8 @@ abstract class FirAbstractSessionFactory {
                 // symbol provider can contain source symbol providers from multiple sessions that may represent dependency symbol providers
                 // which should not be propagated transitively.
                 originalSession != null && session.kind == FirSession.Kind.Source && session == originalSession ||
-                        originalSession == null && session.kind == FirSession.Kind.Library -> {
+                        originalSession == null && session.kind == FirSession.Kind.Library ||
+                        this is KlibBasedSymbolProvider -> {
                     result.add(this)
                 }
             }

@@ -63,14 +63,14 @@ object FirJvmSessionFactory : FirAbstractSessionFactory() {
             createKotlinScopeProvider = { FirKotlinScopeProvider(::wrapScopeWithJvmMapped) },
             createProviders = { session, builtinsModuleData, kotlinScopeProvider, syntheticFunctionInterfaceProvider ->
                 listOfNotNull(
-                    runIf(resolvedKLibs.isNotEmpty()) {
-                        KlibBasedSymbolProvider(
-                            session,
-                            moduleDataProvider,
-                            kotlinScopeProvider,
-                            resolvedKLibs.map { it.library }
-                        )
-                    },
+//                    runIf(resolvedKLibs.isNotEmpty()) {
+//                        KlibBasedSymbolProvider(
+//                            session,
+//                            moduleDataProvider,
+//                            kotlinScopeProvider,
+//                            resolvedKLibs.map { it.library }
+//                        )
+//                    },
                     JvmClassFileBasedSymbolProvider(
                         session,
                         moduleDataProvider,
