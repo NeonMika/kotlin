@@ -63,7 +63,8 @@ object SMAPBuilder {
 }
 
 /**
- * This class is "SMAP delegate". It uses info from `SMAP` and fills `SourceMapper`. Used mostly to fill line numbers of inlined function.
+ * This class is an "SMAP delegate". It uses the info from [smap] and fills [parent].
+ * Used mostly to fill line numbers of an inlined function.
  */
 class SourceMapCopier(val parent: SourceMapper, private val smap: SMAP, val callSite: SourcePosition? = null) {
     private val visitedLines = Int2IntOpenHashMap()
