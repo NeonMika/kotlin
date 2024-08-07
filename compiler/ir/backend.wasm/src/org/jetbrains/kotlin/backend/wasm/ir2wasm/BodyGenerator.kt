@@ -753,7 +753,7 @@ class BodyGenerator(
         val inlineFunction = when (val inlineDeclaration = inlinedBlock.inlineDeclaration) {
             is IrProperty -> inlineDeclaration.getter
             else -> inlineDeclaration as? IrFunction
-        } ?: return super.visitInlinedFunctionBlock(inlinedBlock)
+        } ?: error("Function was expected, but got ${inlinedBlock.inlineDeclaration.render()}")
 
         functionContext.stepIntoInlinedFunction(inlineFunction)
         super.visitInlinedFunctionBlock(inlinedBlock)
