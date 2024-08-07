@@ -52,10 +52,10 @@ private constructor(
 
                 if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
                     /*
-                    For MPP projects starting from 2.0.20, we have consumable/resolvable configurations to get PSM
+                    For MPP projects starting from 2.1.0, we have consumable/resolvable configurations to get PSM
                     Such an approach prevents project-isolation violations.
                     */
-                    getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(resolvedMetadataConfiguration, moduleId)
+                    getProjectMppDependencyProjectStructureMetadataExtractorForCompositProject(resolvedMetadataConfiguration, moduleId)
                 } else {
                     /*
                     We switched to using 'buildPath' instead of 'buildName' in 1.9.20,
@@ -78,14 +78,14 @@ private constructor(
             }
         } else {
             if (metadataArtifact.variant.attributes.getAttribute(ARTIFACT_TYPE_ATTRIBUTE) == "json") {
-                getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(resolvedMetadataConfiguration, moduleId)
+                getProjectMppDependencyProjectStructureMetadataExtractorForCompositProject(resolvedMetadataConfiguration, moduleId)
             } else {
                 JarMppDependencyProjectStructureMetadataExtractor(metadataArtifact.file)
             }
         }
     }
 
-    private fun getProjectMppDependencyProjectStructureMetadataExtractorForCompisitProject(
+    private fun getProjectMppDependencyProjectStructureMetadataExtractorForCompositProject(
         resolvedMetadataConfiguration: LazyResolvedConfiguration?,
         moduleId: ComponentIdentifier,
     ): ProjectMppDependencyProjectStructureMetadataExtractor {
