@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.config.ContentRoot
 import org.jetbrains.kotlin.cli.common.messages.toLogger
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
@@ -103,30 +102,30 @@ open class FirFrontendFacade(
 
     override fun analyze(module: TestModule): FirOutputArtifact {
         val isMppSupported = module.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)
-
         val sortedModules = if (isMppSupported) sortDependsOnTopologically(module) else listOf(module)
 
-        val (moduleDataMap, moduleDataProvider) = initializeModuleData(sortedModules)
+        val firOutputPartForDependsOnModules = sortedModules.map { module ->
+            val sortedModules = if (isMppSupported) sortDependsOnTopologically(module) else listOf(module)
 
-        val project = testServices.compilerConfigurationProvider.getProject(module)
-        val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
-        val targetPlatform = module.targetPlatform
-        val predefinedJavaComponents = runIf(targetPlatform.isJvm()) {
-            FirSharableJavaComponents(firCachesFactoryForCliMode)
-        }
-        val projectEnvironment = createLibrarySession(
-            module,
-            project,
-            Name.special("<${module.name}>"),
-            testServices.firModuleInfoProvider.firSessionProvider,
-            moduleDataProvider,
-            testServices.compilerConfigurationProvider.getCompilerConfiguration(module),
-            extensionRegistrars,
-            predefinedJavaComponents
-        )
+            val (moduleDataMap, moduleDataProvider) = initializeModuleData(sortedModules)
 
-        val firOutputPartForDependsOnModules = sortedModules.map {
-            analyze(it, moduleDataMap[it]!!, targetPlatform, projectEnvironment, extensionRegistrars, predefinedJavaComponents)
+            val project = testServices.compilerConfigurationProvider.getProject(module)
+            val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
+            val targetPlatform = module.targetPlatform
+            val predefinedJavaComponents = runIf(targetPlatform.isJvm()) {
+                FirSharableJavaComponents(firCachesFactoryForCliMode)
+            }
+            val projectEnvironment = createLibrarySession(
+                module,
+                project,
+                Name.special("<${module.name}>"),
+                testServices.firModuleInfoProvider.firSessionProvider,
+                moduleDataProvider,
+                testServices.compilerConfigurationProvider.getCompilerConfiguration(module),
+                extensionRegistrars,
+                predefinedJavaComponents
+            )
+            analyze(module, moduleDataMap[module]!!, targetPlatform, projectEnvironment, extensionRegistrars, predefinedJavaComponents)
         }
 
         return FirOutputArtifactImpl(firOutputPartForDependsOnModules)
@@ -140,20 +139,6 @@ open class FirFrontendFacade(
 
     private fun initializeModuleData(modules: List<TestModule>): Pair<Map<TestModule, FirModuleData>, ModuleDataProvider> {
         val mainModule = modules.last()
-        val moduleInfoProvider = testServices.firModuleInfoProvider
-        val moduleDataMap = mutableMapOf<TestModule, FirModuleData>()
-
-        for (module in modules) {
-            val moduleData = FirModuleDataMutableDeps(
-                Name.special("<${module.name}>"),
-                mainModule.targetPlatform,
-                isCommon = module.targetPlatform.isCommon(),
-            )
-
-            moduleInfoProvider.registerModuleData(module, moduleData)
-
-            moduleDataMap[module] = moduleData
-        }
 
         val targetPlatform = mainModule.targetPlatform
 
@@ -165,18 +150,28 @@ open class FirFrontendFacade(
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val configuration = compilerConfigurationProvider.getCompilerConfiguration(mainModule)
 
-        val libraryList = initializeLibraryList(modules, binaryModuleData, targetPlatform, configuration, testServices)
+        val libraryList = initializeLibraryList(mainModule, binaryModuleData, targetPlatform, configuration, testServices)
+
+        val moduleInfoProvider = testServices.firModuleInfoProvider
+        val moduleDataMap = mutableMapOf<TestModule, FirModuleData>()
 
         for (module in modules) {
             val regularModules = libraryList.regularDependencies + moduleInfoProvider.getRegularDependentSourceModules(module)
             val friendModules = libraryList.friendsDependencies + moduleInfoProvider.getDependentFriendSourceModules(module)
             val dependsOnModules = libraryList.dependsOnDependencies + moduleInfoProvider.getDependentDependsOnSourceModules(module)
 
-            with (moduleDataMap[module] as FirModuleDataMutableDeps) {
-                dependencies = regularModules
-                dependsOnDependencies = dependsOnModules
-                friendDependencies = friendModules
-            }
+            val moduleData = FirModuleDataImpl(
+                Name.special("<${module.name}>"),
+                regularModules,
+                dependsOnModules,
+                friendModules,
+                mainModule.targetPlatform,
+                isCommon = module.targetPlatform.isCommon(),
+            )
+
+            moduleInfoProvider.registerModuleData(module, moduleData)
+
+            moduleDataMap[module] = moduleData
         }
 
         return moduleDataMap to libraryList.moduleDataProvider
@@ -494,22 +489,3 @@ open class FirFrontendFacade(
         }
     }
 }
-
-class FirModuleDataMutableDeps(
-    override val name: Name,
-    override val platform: TargetPlatform,
-    override val capabilities: FirModuleCapabilities = FirModuleCapabilities.Empty,
-    override val isCommon: Boolean = platform.isCommon(),
-) : FirModuleData() {
-    override var dependencies: List<FirModuleData> = emptyList()
-    override var dependsOnDependencies: List<FirModuleData> = emptyList()
-    override var friendDependencies: List<FirModuleData> = emptyList()
-
-    override val session: FirSession
-        get() = boundSession
-            ?: error("module data ${this::class.simpleName}:${name} not bound to session")
-
-    override val allDependsOnDependencies: List<FirModuleData>
-        get() = topologicalSort(dependsOnDependencies) { it.dependsOnDependencies }
-}
-
