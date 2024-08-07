@@ -22,7 +22,5 @@ fun commonBox(): String = foo() // 1
 // MODULE: app-jvm(lib-jvm)()(app-common)
 // FILE: app.kt
 
-fun box() = commonBox()
-
-//foo("") // 1
+fun box() = commonBox().substring(0, 1) + foo("").substring(1) /* 1 */
 
