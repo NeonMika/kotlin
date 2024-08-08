@@ -28,7 +28,7 @@ fun GradleProject.enableBuildScriptInjectionsIfNecessary() {
             buildscript {
                 println("⚠️ GradleBuildScriptInjections Enabled. Classes from kotlin-gradle-plugin-integration-tests injected to buildscript")               
                 dependencies {
-                    classpath(project.files("$injectionClasses"))
+                    classpath(project.files('$injectionClasses'))
                 }
             }
             
@@ -74,6 +74,7 @@ class GradleBuildScriptInjectionContext(
     val project: Project
 ) {
     val kotlinMultiplatform get() = project.extensions.getByName("kotlin") as org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+    val dependencies get() = project.dependencies
 }
 
 inline fun GradleProject.buildScriptInjection(crossinline code: GradleBuildScriptInjectionContext.() -> Unit) {
@@ -112,12 +113,14 @@ inline fun GradleProject.buildScriptInjection(crossinline code: GradleBuildScrip
             |""".trimMargin()
         )
     }
-    val escapedFqn = injection.javaClass.name.replace("$", "\\\$")
+
     if (buildGradleKts.exists()) {
+        val escapedFqn = injection.javaClass.name.replace("$", "\\\$")
         buildGradleKts.appendText("\norg.jetbrains.kotlin.gradle.testbase.invokeBuildScriptInjection(project, \"$escapedFqn\")\n")
     }
 
     if (buildGradle.exists()) {
-        buildGradle.appendText("\norg.jetbrains.kotlin.gradle.testbase.TestGradleBuildInjectionKt.invokeBuildScriptInjection(project, \"$escapedFqn\")\n")
+        val fqn = injection.javaClass.name
+        buildGradle.appendText("\norg.jetbrains.kotlin.gradle.testbase.TestGradleBuildInjectionKt.invokeBuildScriptInjection(project, '$fqn')\n")
     }
 }
